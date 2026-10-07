@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Booking expired — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10; --surface:#18181A; --surface-raised:#201F21;
+    --border:#2C2A2C; --border-soft:#232224;
+    --text-primary:#EBEAE6; --text-secondary:#8C8A86; --text-muted:#5D5B58;
+    --teal:#4FA893; --amber:#D2984E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:28px 20px;line-height:1.5;text-align:center;
+  }
+  .glyph-ring{
+    width:60px;height:60px;border:2px solid var(--amber);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:24px;
+  }
+  .glyph-ring span{font-family:'Fraunces',serif;font-size:24px;color:var(--amber);}
+
+  h1{
+    font-family:'Fraunces',serif;font-weight:500;
+    font-size:clamp(26px,7vw,30px);margin-bottom:10px;
+  }
+  .sub{color:var(--text-secondary);font-size:13.5px;max-width:32ch;margin-bottom:30px;}
+
+  .ticket{
+    width:100%;max-width:340px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;padding:20px;margin-bottom:28px;
+    text-align:left;
+  }
+  .ticket .row{
+    display:flex;justify-content:space-between;
+    padding:9px 0;border-bottom:1px solid var(--border-soft);
+    font-size:12.5px;
+  }
+  .ticket .row:last-child{border-bottom:none;}
+  .ticket .row .lbl{color:var(--text-muted);}
+  .ticket .row .val{color:var(--text-primary);}
+  .ticket .row .val.amber{color:var(--amber);}
+
+  .cta{
+    display:block;width:100%;max-width:340px;text-align:center;
+    background:var(--teal);color:#0D1F1B;border:none;
+    padding:17px;font-family:'IBM Plex Mono',monospace;
+    font-weight:500;font-size:14.5px;letter-spacing:0.02em;
+    border-radius:2px;text-decoration:none;margin-bottom:14px;
+  }
+  .secondary-link{font-size:12.5px;color:var(--text-muted);text-decoration:none;}
+</style>
+</head>
+<body>
+  <div class="glyph-ring"><span>⏱</span></div>
+  <h1>That booking expired</h1>
+  <p class="sub">You didn't scan the seat's QR within 10 minutes, so it's been released back to the matrix.</p>
+
+  <div class="ticket">
+    <div class="row"><span class="lbl">seat</span><span class="val">B1</span></div>
+    <div class="row"><span class="lbl">booked at</span><span class="val">2:14 pm</span></div>
+    <div class="row"><span class="lbl">expired at</span><span class="val amber">2:24 pm</span></div>
+    <div class="row"><span class="lbl">status</span><span class="val amber">no-show recorded</span></div>
+  </div>
+
+  <a class="cta" href="matrix.html">Book another seat</a>
+  <a class="secondary-link" href="history.html">See my no-show history</a>
+      <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page not found — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10; --surface:#18181A;
+    --border:#2C2A2C; --border-soft:#232224;
+    --text-primary:#EBEAE6; --text-secondary:#8C8A86; --text-muted:#5D5B58;
+    --teal:#4FA893;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:28px 20px;line-height:1.5;text-align:center;
+  }
+  .call-number{
+    font-family:'Fraunces',serif;
+    font-size:clamp(64px,20vw,96px);
+    font-weight:600;
+    color:var(--surface);
+    -webkit-text-stroke:1.5px var(--border);
+    line-height:1;
+    margin-bottom:8px;
+  }
+  h1{
+    font-family:'Fraunces',serif;font-weight:500;
+    font-size:clamp(22px,6vw,26px);margin-bottom:10px;
+  }
+  .sub{color:var(--text-secondary);font-size:13px;max-width:30ch;margin-bottom:30px;}
+  .cta{
+    display:inline-block;
+    background:var(--teal);color:#0D1F1B;
+    padding:14px 26px;border-radius:2px;
+    text-decoration:none;font-weight:500;font-size:13.5px;
+  }
+</style>
+</head>
+<body>
+  <div class="call-number">404</div>
+  <h1>Not in the catalog</h1>
+  <p class="sub">This page doesn't exist, or the link's out of date.</p>
+  <a class="cta" href="dashboard.html">Back to dashboard</a>
+      <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "name": "stacks-library-seat-management",
+  "version": "1.0.0",
+  "description": "Smart library seat allocation and real-time occupancy platform",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

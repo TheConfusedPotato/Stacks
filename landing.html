@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stacks — Library seats, actually available</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10; --surface:#18181A; --surface-raised:#201F21;
+    --border:#2C2A2C; --border-soft:#232224;
+    --text-primary:#EBEAE6; --text-secondary:#8C8A86; --text-muted:#5D5B58;
+    --teal:#4FA893; --teal-fill:#1B2E2A;
+    --amber:#D2984E; --red:#BD564C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    line-height:1.6;
+  }
+  header{
+    padding:20px;
+    display:flex;justify-content:space-between;align-items:center;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .mark{font-family:'Fraunces',serif;font-size:19px;font-weight:600;}
+  .nav-cta{
+    font-size:12.5px;color:var(--text-secondary);
+    text-decoration:none;
+    border:1px solid var(--border);
+    padding:8px 14px;border-radius:2px;
+  }
+
+  .hero{
+    padding:56px 20px 44px;
+    text-align:center;
+  }
+  .hero .stamp{
+    display:inline-flex;align-items:center;gap:8px;
+    border:1px solid var(--border);color:var(--text-muted);
+    padding:6px 12px;border-radius:2px;
+    font-size:10.5px;letter-spacing:0.05em;margin-bottom:22px;
+  }
+  .hero h1{
+    font-family:'Fraunces',serif;font-weight:500;
+    font-size:clamp(32px,9vw,52px);line-height:1.12;
+    margin-bottom:16px;
+    max-width:14ch;margin-left:auto;margin-right:auto;
+  }
+  .hero p{
+    color:var(--text-secondary);
+    font-size:14.5px;max-width:36ch;margin:0 auto 32px;
+  }
+  .hero-cta-row{
+    display:flex;flex-direction:column;gap:12px;
+    max-width:280px;margin:0 auto;
+  }
+  .btn-primary{
+    background:var(--teal);color:#0D1F1B;
+    padding:15px;border-radius:2px;text-decoration:none;
+    font-weight:500;font-size:14px;
+  }
+  .btn-secondary{
+    background:transparent;color:var(--text-secondary);
+    border:1px solid var(--border);
+    padding:15px;border-radius:2px;text-decoration:none;font-size:14px;
+  }
+
+  .stat-strip{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    border-top:1px solid var(--border-soft);
+    border-bottom:1px solid var(--border-soft);
+  }
+  .stat{
+    padding:22px 12px;text-align:center;
+    border-right:1px solid var(--border-soft);
+  }
+  .stat:last-child{border-right:none;}
+  .stat .num{
+    font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--teal);
+    display:block;margin-bottom:4px;
+  }
+  .stat .lbl{font-size:10px;color:var(--text-muted);letter-spacing:0.02em;}
+
+  .problem-section{padding:48px 20px;}
+  .section-label{
+    font-size:11px;color:var(--text-muted);letter-spacing:0.05em;
+    text-align:center;margin-bottom:14px;
+  }
+  .section-title{
+    font-family:'Fraunces',serif;font-size:clamp(22px,6vw,28px);font-weight:500;
+    text-align:center;margin-bottom:36px;max-width:22ch;margin-left:auto;margin-right:auto;
+  }
+
+  .flow-steps{display:flex;flex-direction:column;gap:0;max-width:480px;margin:0 auto;}
+  .flow-step{
+    display:flex;gap:16px;padding:18px 4px;
+    border-top:1px solid var(--border-soft);
+  }
+  .flow-step:last-child{border-bottom:1px solid var(--border-soft);}
+  .flow-step .idx{
+    font-family:'Fraunces',serif;font-size:16px;color:var(--text-muted);width:22px;flex-shrink:0;
+  }
+  .flow-step h3{font-size:14px;font-weight:500;margin-bottom:4px;}
+  .flow-step p{font-size:12px;color:var(--text-secondary);}
+
+  .cta-band{
+    padding:48px 20px;text-align:center;
+    border-top:1px solid var(--border-soft);
+  }
+  .cta-band h2{
+    font-family:'Fraunces',serif;font-size:clamp(22px,6vw,26px);font-weight:500;margin-bottom:10px;
+  }
+  .cta-band p{color:var(--text-secondary);font-size:13px;margin-bottom:24px;}
+
+  footer{
+    padding:20px;text-align:center;
+    border-top:1px solid var(--border-soft);
+    font-size:11px;color:var(--text-muted);
+  }
+
+  @media (min-width:600px){
+    header,.hero,.problem-section,.cta-band{padding-left:48px;padding-right:48px;}
+    .hero-cta-row{flex-direction:row;max-width:360px;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <span class="mark">Stacks</span>
+    <a class="nav-cta" href="signin.html">Sign in</a>
+  </header>
+
+  <section class="hero">
+    <span class="stamp">built for PICT central library</span>
+    <h1>A seat that's free on the app should be free in the room.</h1>
+    <p>QR-verified booking that clears itself when no one shows up — so hoarded seats go back into circulation automatically.</p>
+    <div class="hero-cta-row">
+      <a class="btn-primary" href="signup.html">Get your library card</a>
+      <a class="btn-secondary" href="signin.html">Sign in</a>
+    </div>
+  </section>
+
+  <div class="stat-strip">
+    <div class="stat"><span class="num">100</span><span class="lbl">seats tracked live</span></div>
+    <div class="stat"><span class="num">10 min</span><span class="lbl">to confirm a booking</span></div>
+    <div class="stat"><span class="num">5 min</span><span class="lbl">grace period to vacate</span></div>
+  </div>
+
+  <section class="problem-section">
+    <p class="section-label">the problem</p>
+    <h2 class="section-title">Hoarded seats look occupied, whether or not anyone's using them.</h2>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <span class="idx">1</span>
+        <div>
+          <h3>Book a seat on the live matrix</h3>
+          <p>See real seat states, not a static floor plan.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <span class="idx">2</span>
+        <div>
+          <h3>Scan the QR to claim it</h3>
+          <p>No scan within 10 minutes, and the seat frees itself — no manual clearing needed.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <span class="idx">3</span>
+        <div>
+          <h3>Vacate when your time's up</h3>
+          <p>A 5-minute grace period, a phone nudge, then it's flagged for staff to check.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <h2>Stop guessing which seats are actually free.</h2>
+    <p>Set up takes one college email.</p>
+    <a class="btn-primary" href="signup.html" style="display:inline-block;text-decoration:none;">Create your account</a>
+  </section>
+
+  <footer>Stacks · a library seat management system</footer>
+      <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

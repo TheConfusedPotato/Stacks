@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify code — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10;
+    --surface:#18181A;
+    --surface-raised:#201F21;
+    --border:#2C2A2C;
+    --border-soft:#232224;
+    --text-primary:#EBEAE6;
+    --text-secondary:#8C8A86;
+    --text-muted:#5D5B58;
+    --teal:#4FA893;
+    --amber:#D2984E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{background:var(--bg);}
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px 18px;
+    line-height:1.5;
+  }
+  .card{
+    width:100%;
+    max-width:400px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    position:relative;
+  }
+  .spine{
+    position:absolute;
+    left:0;top:0;bottom:0;width:22px;
+    border-right:1px solid var(--border-soft);
+    background-image:repeating-linear-gradient(
+      to bottom, transparent 0, transparent 15px,
+      var(--border-soft) 15px, var(--border-soft) 16px
+    );
+  }
+  .content{padding:36px 28px 32px 44px;}
+  .catalog-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:24px;
+  }
+  .mark{font-family:'Fraunces',serif;font-size:20px;font-weight:600;}
+  .call-number{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12px;color:var(--text-secondary);
+    text-decoration:none;
+    margin-bottom:22px;
+  }
+  .back-link .arrow{font-family:'Fraunces',serif;font-size:14px;}
+
+  h1{
+    font-family:'Fraunces',serif;font-weight:500;
+    font-size:clamp(26px,7vw,30px);line-height:1.18;margin-bottom:10px;
+  }
+  .sub{color:var(--text-secondary);font-size:13px;margin-bottom:8px;max-width:34ch;}
+  .sub strong{color:var(--text-primary);font-weight:500;}
+
+  .timer-line{
+    display:flex;align-items:center;gap:7px;
+    font-size:12px;color:var(--amber);
+    margin-bottom:28px;
+  }
+  .timer-line .dot{width:5px;height:5px;border-radius:50%;background:var(--amber);}
+
+  .otp-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:26px;
+  }
+  .otp-row input{
+    width:100%;
+    aspect-ratio:1;
+    text-align:center;
+    background:var(--surface-raised);
+    border:1px solid var(--border);
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:20px;
+    font-weight:500;
+    border-radius:2px;
+    outline:none;
+  }
+  .otp-row input:focus, .otp-row input:focus-visible{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal);}
+  .otp-row input::placeholder{color:var(--text-muted);font-size:16px;}
+
+  .cta{
+    background:var(--teal);
+    color:#0D1F1B;
+    border:none;
+    padding:16px;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:500;font-size:14px;letter-spacing:0.02em;
+    border-radius:2px;cursor:pointer;width:100%;
+  }
+
+  .resend-row{
+    text-align:center;
+    margin-top:20px;
+    font-size:12.5px;
+    color:var(--text-muted);
+  }
+  .resend-row a{
+    color:var(--text-secondary);
+    text-decoration:none;
+    border-bottom:1px solid var(--border);
+    padding-bottom:1px;
+  }
+
+  @media (min-width:480px){
+    .content{padding:44px 40px 40px 56px;}
+    .spine{width:26px;}
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="spine"></div>
+    <div class="content">
+      <div class="catalog-row">
+        <span class="mark">Stacks</span>
+        <span class="call-number">PICT / LIB-04</span>
+      </div>
+
+      <a class="back-link" href="signup.html"><span class="arrow">←</span> Back</a>
+
+      <h1>Verify your email</h1>
+      <p class="sub">We sent a 6-digit code to <strong>ananya@pict.edu</strong></p>
+      <div class="timer-line"><span class="dot"></span> code expires in 04:12</div>
+
+      <form>
+        <div class="otp-row">
+          <input type="text" inputmode="numeric" maxlength="1" placeholder="·" autofocus>
+          <input type="text" inputmode="numeric" maxlength="1" placeholder="·">
+          <input type="text" inputmode="numeric" maxlength="1" placeholder="·">
+          <input type="text" inputmode="numeric" maxlength="1" placeholder="·">
+          <input type="text" inputmode="numeric" maxlength="1" placeholder="·">
+          <input type="text" inputmode="numeric" maxlength="1" placeholder="·">
+        </div>
+        <button class="cta" type="submit">Verify and continue</button>
+      </form>
+
+      <p class="resend-row">Didn't get it? <a href="javascript:void(0)" id="resend-code-btn">Resend code</a></p>
+    </div>
+  </div>
+  <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

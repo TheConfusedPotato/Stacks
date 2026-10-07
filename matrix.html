@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seat matrix — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10;
+    --surface:#18181A;
+    --surface-raised:#201F21;
+    --border:#2C2A2C;
+    --border-soft:#232224;
+    --text-primary:#EBEAE6;
+    --text-secondary:#8C8A86;
+    --text-muted:#5D5B58;
+    --teal:#4FA893;
+    --teal-fill:#1B2E2A;
+    --amber:#D2984E;
+    --amber-fill:#2E271C;
+    --red:#BD564C;
+    --red-fill:#2B1E1D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    line-height:1.5;
+  }
+
+  header{
+    padding:18px 20px 14px;
+    border-bottom:1px solid var(--border-soft);
+    position:sticky;top:0;
+    background:var(--bg);
+    z-index:5;
+  }
+  .top-row{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:14px;
+  }
+  .mark{font-family:'Fraunces',serif;font-size:18px;font-weight:600;}
+  .top-left{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .top-actions{display:flex;align-items:center;gap:8px;}
+  .call-number{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+
+  .zone-tabs{
+    display:flex;gap:8px;overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .zone-tabs::-webkit-scrollbar{display:none;}
+  .zone-tab{
+    flex-shrink:0;
+    padding:8px 14px;
+    font-size:12.5px;
+    border:1px solid var(--border);
+    border-radius:2px;
+    color:var(--text-secondary);
+    white-space:nowrap;
+  }
+  .zone-tab.active{
+    border-color:var(--teal);
+    color:var(--teal);
+    background:var(--teal-fill);
+  }
+
+  main{
+    flex:1;
+    padding:20px 20px 10px;
+    overflow-y:auto;
+  }
+
+  .row-label{
+    font-size:11px;
+    color:var(--text-muted);
+    letter-spacing:0.04em;
+    margin:18px 0 10px;
+  }
+  .row-label:first-child{margin-top:0;}
+
+  .seat-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:8px;
+  }
+  .seat{
+    aspect-ratio:1;
+    border-radius:2px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    position:relative;
+  }
+  .seat .id{
+    font-size:14px;
+    font-weight:500;
+    color:var(--text-secondary);
+  }
+  .seat .state{
+    font-size:9px;
+    color:var(--text-muted);
+    letter-spacing:0.03em;
+  }
+  .seat.free .id{color:var(--text-primary);}
+  .seat.free .state{color:var(--teal);}
+  .seat.free{border-color:var(--border);}
+
+  .seat.selected{
+    background:var(--teal-fill);
+    border-color:var(--teal);
+    border-width:2px;
+  }
+  .seat.selected .id{color:var(--teal);}
+  .seat.selected .state{color:var(--teal);}
+  .seat.selected::after{
+    content:'';
+    position:absolute;
+    top:6px;right:6px;
+    width:6px;height:6px;
+    border-radius:50%;
+    background:var(--teal);
+  }
+
+  .seat.pending{
+    background:var(--amber-fill);
+    border-color:var(--amber);
+  }
+  .seat.pending .id{color:var(--amber);}
+  .seat.pending .state{color:var(--amber);}
+
+  .seat.occupied{
+    background:var(--surface);
+    border-color:var(--border-soft);
+    opacity:0.5;
+  }
+  .seat.occupied .id{color:var(--text-muted);}
+  .seat.occupied .state{color:var(--text-muted);}
+
+  .seat.overstay{
+    background:var(--red-fill);
+    border-color:var(--red);
+  }
+  .seat.overstay .id{color:var(--red);}
+  .seat.overstay .state{color:var(--red);}
+  .seat.maintenance{background:#201F21;border-color:var(--border-soft);opacity:0.5;}
+  .seat.maintenance .id{color:var(--text-muted);}
+  .seat.maintenance .state{color:var(--text-muted);}
+
+  .legend{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    padding:18px 4px 8px;
+    font-size:10.5px;
+    color:var(--text-muted);
+  }
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .legend-dot{width:7px;height:7px;border-radius:2px;}
+  .legend-dot.free{background:var(--border);}
+  .legend-dot.selected{background:var(--teal);}
+  .legend-dot.pending{background:var(--amber);}
+  .legend-dot.occupied{background:var(--text-muted);}
+  .legend-dot.overstay{background:var(--red);}
+  .legend-dot.maintenance{background:#353335;border:1px solid var(--border);}
+
+  footer{
+    padding:16px 20px 22px;
+    border-top:1px solid var(--border-soft);
+    background:var(--bg);
+    position:sticky;
+    bottom:0;
+  }
+  .footer-info{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:12px;
+  }
+  .footer-info .seat-name{
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    font-weight:500;
+  }
+  .footer-info .timer-note{
+    font-size:11px;
+    color:var(--text-secondary);
+  }
+  .cta{
+    width:100%;
+    background:var(--teal);
+    color:#0D1F1B;
+    border:none;
+    padding:17px;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:500;
+    font-size:14.5px;
+    letter-spacing:0.02em;
+    border-radius:2px;
+  }
+
+  @media (min-width:600px){
+    .seat-grid{grid-template-columns:repeat(10,1fr);gap:6px;}
+    main,header,footer{padding-left:32px;padding-right:32px;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="top-row">
+      <div class="top-left">
+        <span class="mark">Stacks</span>
+        <span class="call-number">Reading hall · Ground floor (100 seats)</span>
+      </div>
+      <div class="top-actions"></div>
+    </div>
+    <div class="zone-tabs">
+      <span class="zone-tab active">All</span>
+      <span class="zone-tab">Silent zone</span>
+      <span class="zone-tab">Near power</span>
+      <span class="zone-tab">Window row</span>
+    </div>
+  </header>
+
+  <main>
+    <p class="row-label">Row A</p>
+    <div class="seat-grid">
+      <div class="seat selected" data-seat-id="A1"><span class="id">A1</span><span class="state">selected</span></div>
+      <div class="seat occupied" data-seat-id="A2"><span class="id">A2</span><span class="state">occupied</span></div>
+      <div class="seat occupied" data-seat-id="A3"><span class="id">A3</span><span class="state">occupied</span></div>
+      <div class="seat free" data-seat-id="A4"><span class="id">A4</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="A5"><span class="id">A5</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="A6"><span class="id">A6</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="A7"><span class="id">A7</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="A8"><span class="id">A8</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="A9"><span class="id">A9</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="A10"><span class="id">A10</span><span class="state">free</span></div>
+    </div>
+    <p class="row-label">Row B</p>
+    <div class="seat-grid">
+      <div class="seat pending" data-seat-id="B1"><span class="id">B1</span><span class="state">held</span></div>
+      <div class="seat free" data-seat-id="B2"><span class="id">B2</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="B3"><span class="id">B3</span><span class="state">free</span></div>
+      <div class="seat overstay" data-seat-id="B4"><span class="id">B4</span><span class="state">flagged</span></div>
+      <div class="seat free" data-seat-id="B5"><span class="id">B5</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="B6"><span class="id">B6</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="B7"><span class="id">B7</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="B8"><span class="id">B8</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="B9"><span class="id">B9</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="B10"><span class="id">B10</span><span class="state">free</span></div>
+    </div>
+    <p class="row-label">Row C</p>
+    <div class="seat-grid">
+      <div class="seat occupied" data-seat-id="C1"><span class="id">C1</span><span class="state">occupied</span></div>
+      <div class="seat occupied" data-seat-id="C2"><span class="id">C2</span><span class="state">occupied</span></div>
+      <div class="seat free" data-seat-id="C3"><span class="id">C3</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="C4"><span class="id">C4</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="C5"><span class="id">C5</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="C6"><span class="id">C6</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="C7"><span class="id">C7</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="C8"><span class="id">C8</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="C9"><span class="id">C9</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="C10"><span class="id">C10</span><span class="state">free</span></div>
+    </div>
+    <p class="row-label">Row D</p>
+    <div class="seat-grid">
+      <div class="seat free" data-seat-id="D1"><span class="id">D1</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="D2"><span class="id">D2</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="D3"><span class="id">D3</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="D4"><span class="id">D4</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="D5"><span class="id">D5</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="D6"><span class="id">D6</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="D7"><span class="id">D7</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="D8"><span class="id">D8</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="D9"><span class="id">D9</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="D10"><span class="id">D10</span><span class="state">free</span></div>
+    </div>
+    <p class="row-label">Row E</p>
+    <div class="seat-grid">
+      <div class="seat free" data-seat-id="E1"><span class="id">E1</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="E2"><span class="id">E2</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="E3"><span class="id">E3</span><span class="state">free</span></div>
+      <div class="seat occupied" data-seat-id="E4"><span class="id">E4</span><span class="state">occupied</span></div>
+      <div class="seat free" data-seat-id="E5"><span class="id">E5</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="E6"><span class="id">E6</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="E7"><span class="id">E7</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="E8"><span class="id">E8</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="E9"><span class="id">E9</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="E10"><span class="id">E10</span><span class="state">free</span></div>
+    </div>
+    <p class="row-label">Row F</p>
+    <div class="seat-grid">
+      <div class="seat free" data-seat-id="F1"><span class="id">F1</span><span class="state">free</span></div>
+      <div class="seat occupied" data-seat-id="F2"><span class="id">F2</span><span class="state">occupied</span></div>
+      <div class="seat free" data-seat-id="F3"><span class="id">F3</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="F4"><span class="id">F4</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="F5"><span class="id">F5</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="F6"><span class="id">F6</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="F7"><span class="id">F7</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="F8"><span class="id">F8</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="F9"><span class="id">F9</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="F10"><span class="id">F10</span><span class="state">free</span></div>
+    </div>
+    <p class="row-label">Row G</p>
+    <div class="seat-grid">
+      <div class="seat free" data-seat-id="G1"><span class="id">G1</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="G2"><span class="id">G2</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="G3"><span class="id">G3</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="G4"><span class="id">G4</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="G5"><span class="id">G5</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="G6"><span class="id">G6</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="G7"><span class="id">G7</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="G8"><span class="id">G8</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="G9"><span class="id">G9</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="G10"><span class="id">G10</span><span class="state">free</span></div>
+    </div>
+    <p class="row-label">Row H</p>
+    <div class="seat-grid">
+      <div class="seat free" data-seat-id="H1"><span class="id">H1</span><span class="state">free</span></div>
+      <div class="seat occupied" data-seat-id="H2"><span class="id">H2</span><span class="state">occupied</span></div>
+      <div class="seat free" data-seat-id="H3"><span class="id">H3</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="H4"><span class="id">H4</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="H5"><span class="id">H5</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="H6"><span class="id">H6</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="H7"><span class="id">H7</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="H8"><span class="id">H8</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="H9"><span class="id">H9</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="H10"><span class="id">H10</span><span class="state">free</span></div>
+    </div>
+    <p class="row-label">Row I</p>
+    <div class="seat-grid">
+      <div class="seat free" data-seat-id="I1"><span class="id">I1</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="I2"><span class="id">I2</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="I3"><span class="id">I3</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="I4"><span class="id">I4</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="I5"><span class="id">I5</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="I6"><span class="id">I6</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="I7"><span class="id">I7</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="I8"><span class="id">I8</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="I9"><span class="id">I9</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="I10"><span class="id">I10</span><span class="state">free</span></div>
+    </div>
+    <p class="row-label">Row J</p>
+    <div class="seat-grid">
+      <div class="seat free" data-seat-id="J1"><span class="id">J1</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="J2"><span class="id">J2</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="J3"><span class="id">J3</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="J4"><span class="id">J4</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="J5"><span class="id">J5</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="J6"><span class="id">J6</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="J7"><span class="id">J7</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="J8"><span class="id">J8</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="J9"><span class="id">J9</span><span class="state">free</span></div>
+      <div class="seat free" data-seat-id="J10"><span class="id">J10</span><span class="state">free</span></div>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot free"></span>free</span>
+      <span class="legend-item"><span class="legend-dot selected"></span>selected</span>
+      <span class="legend-item"><span class="legend-dot pending"></span>held, unconfirmed</span>
+      <span class="legend-item"><span class="legend-dot occupied"></span>occupied</span>
+      <span class="legend-item"><span class="legend-dot overstay"></span>overstay flagged</span>
+      <span class="legend-item"><span class="legend-dot maintenance"></span>maintenance</span>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-info">
+      <span class="seat-name">Seat A2</span>
+      <span class="timer-note">10 min to scan once booked</span>
+    </div>
+    <button class="cta" type="button">Book seat A2</button>
+  </footer>
+      <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

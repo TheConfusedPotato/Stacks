@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alerts — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10; --surface:#18181A; --surface-raised:#201F21;
+    --border:#2C2A2C; --border-soft:#232224;
+    --text-primary:#EBEAE6; --text-secondary:#8C8A86; --text-muted:#5D5B58;
+    --teal:#4FA893; --amber:#D2984E; --red:#BD564C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    line-height:1.5;
+    padding-bottom:84px;
+  }
+  header{
+    padding:18px 20px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .mark{font-family:'Fraunces',serif;font-size:18px;font-weight:600;display:block;margin-bottom:2px;}
+  .call-number{font-size:11px;color:var(--text-muted);}
+
+  main{flex:1;padding:16px 20px 10px;}
+
+  .alert{
+    display:flex;gap:12px;
+    padding:16px 4px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .alert-icon{
+    width:34px;height:34px;flex-shrink:0;
+    border-radius:2px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-size:15px;
+  }
+  .alert-icon.amber{background:#2E271C;color:var(--amber);border:1px solid var(--amber);}
+  .alert-icon.red{background:#2B1E1D;color:var(--red);border:1px solid var(--red);}
+  .alert-icon.teal{background:#1B2E2A;color:var(--teal);border:1px solid var(--teal);}
+  .alert-icon.gray{background:var(--surface-raised);color:var(--text-secondary);border:1px solid var(--border);}
+
+  .alert-body{flex:1;}
+  .alert-title{font-size:13.5px;color:var(--text-primary);margin-bottom:3px;}
+  .alert-desc{font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:5px;}
+  .alert-time{font-size:10.5px;color:var(--text-muted);}
+  .unread-dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--teal);flex-shrink:0;margin-top:5px;
+  }
+
+  .section-label{
+    font-size:11px;color:var(--text-muted);letter-spacing:0.04em;margin:22px 0 4px;
+  }
+  .section-label:first-of-type{margin-top:6px;}
+
+  nav.tabbar{
+    position:fixed;bottom:0;left:0;right:0;
+    display:flex;
+    background:var(--bg);
+    border-top:1px solid var(--border-soft);
+    padding:10px 12px 14px;
+  }
+  nav.tabbar a{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+    text-decoration:none;color:var(--text-muted);font-size:10px;
+  }
+  nav.tabbar a.active{color:var(--teal);}
+  nav.tabbar .glyph{font-family:'Fraunces',serif;font-size:16px;}
+
+  @media (min-width:600px){
+    header,main{padding-left:36px;padding-right:36px;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <span class="mark">Alerts</span>
+    <span class="call-number">Notification history</span>
+  </header>
+
+  <main>
+    <p class="section-label">Today</p>
+
+    <div class="alert">
+      <div class="alert-icon red">!</div>
+      <div class="alert-body">
+        <div class="alert-title">Session ended — vacate seat A2</div>
+        <div class="alert-desc">You have 5 minutes to leave before it's flagged for a personnel check.</div>
+        <div class="alert-time">5:42 pm</div>
+      </div>
+      <span class="unread-dot"></span>
+    </div>
+
+    <div class="alert">
+      <div class="alert-icon teal">✓</div>
+      <div class="alert-body">
+        <div class="alert-title">Session started</div>
+        <div class="alert-desc">Your timer for seat A2 began after scanning the QR.</div>
+        <div class="alert-time">3:44 pm</div>
+      </div>
+    </div>
+
+    <p class="section-label">This week</p>
+
+    <div class="alert">
+      <div class="alert-icon amber">＊</div>
+      <div class="alert-body">
+        <div class="alert-title">Booking released — no scan</div>
+        <div class="alert-desc">Seat B1 wasn't confirmed within 10 minutes, so it was freed up.</div>
+        <div class="alert-time">Mon, 10:12 am</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <div class="alert-icon gray">◐</div>
+      <div class="alert-body">
+        <div class="alert-title">Welcome to Stacks</div>
+        <div class="alert-desc">Your account was verified. You're ready to book your first seat.</div>
+        <div class="alert-time">Mon, 9:02 am</div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="tabbar">
+    <a href="dashboard.html"><span class="glyph">⌂</span>Home</a>
+    <a href="matrix.html"><span class="glyph">▦</span>Seats</a>
+    <a href="history.html"><span class="glyph">◷</span>History</a>
+    <a href="profile.html"><span class="glyph">◐</span>Profile</a>
+  </nav>
+      <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

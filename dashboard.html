@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10; --surface:#18181A; --surface-raised:#201F21;
+    --border:#2C2A2C; --border-soft:#232224;
+    --text-primary:#EBEAE6; --text-secondary:#8C8A86; --text-muted:#5D5B58;
+    --teal:#4FA893; --teal-fill:#1B2E2A;
+    --amber:#D2984E; --amber-fill:#2E271C;
+    --red:#BD564C; --red-fill:#2B1E1D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    line-height:1.5;
+    padding-bottom:84px;
+  }
+  header{
+    padding:20px 20px 16px;
+    display:flex;justify-content:space-between;align-items:center;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .mark{font-family:'Fraunces',serif;font-size:18px;font-weight:600;}
+  .avatar{
+    width:34px;height:34px;border-radius:2px;
+    background:var(--surface-raised);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-size:14px;color:var(--text-secondary);
+  }
+
+  main{flex:1;padding:22px 20px;}
+
+  .greeting{
+    font-family:'Fraunces',serif;
+    font-size:clamp(24px,6vw,28px);
+    font-weight:500;
+    margin-bottom:24px;
+  }
+
+  .status-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:2px solid var(--teal);
+    border-radius:2px;
+    padding:18px 18px 16px;
+    margin-bottom:16px;
+  }
+  .status-card .status-label{
+    font-size:11px;color:var(--teal);letter-spacing:0.04em;margin-bottom:8px;
+  }
+  .status-card .status-main{
+    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;
+  }
+  .status-card .seat-name{
+    font-family:'Fraunces',serif;font-size:22px;font-weight:600;
+  }
+  .status-card .time-left{
+    font-size:13px;color:var(--text-secondary);
+  }
+  .status-card .status-sub{
+    font-size:12px;color:var(--text-muted);margin-bottom:14px;
+  }
+  .status-card .link-cta{
+    display:inline-block;
+    font-size:12.5px;color:var(--teal);
+    border-bottom:1px solid var(--teal);
+    padding-bottom:1px;
+  }
+
+  .primary-cta{
+    display:block;
+    width:100%;
+    text-align:center;
+    background:var(--teal);
+    color:#0D1F1B;
+    border:none;
+    padding:17px;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:500;font-size:14.5px;letter-spacing:0.02em;
+    border-radius:2px;
+    margin-bottom:28px;
+    text-decoration:none;
+  }
+
+  .section-label{
+    font-size:11px;color:var(--text-muted);letter-spacing:0.04em;
+    margin-bottom:12px;
+  }
+
+  .quick-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    margin-bottom:28px;
+  }
+  .quick-item{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:16px;
+    text-decoration:none;
+  }
+  .quick-item .num{
+    font-family:'Fraunces',serif;font-size:22px;font-weight:600;
+    color:var(--text-primary);margin-bottom:4px;
+    display:block;
+  }
+  .quick-item .lbl{font-size:11px;color:var(--text-secondary);}
+
+  nav.tabbar{
+    position:fixed;bottom:0;left:0;right:0;
+    display:flex;
+    background:var(--bg);
+    border-top:1px solid var(--border-soft);
+    padding:10px 12px 14px;
+  }
+  nav.tabbar a{
+    flex:1;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    text-decoration:none;
+    color:var(--text-muted);
+    font-size:10px;
+  }
+  nav.tabbar a.active{color:var(--teal);}
+  nav.tabbar .glyph{font-family:'Fraunces',serif;font-size:16px;}
+
+  @media (min-width:600px){
+    header,main{padding-left:36px;padding-right:36px;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <span class="mark">Stacks</span>
+    <span class="avatar">A</span>
+  </header>
+
+  <main>
+    <h1 class="greeting">Good afternoon, Ananya</h1>
+
+    <div class="status-card">
+      <div class="status-label">active session</div>
+      <div class="status-main">
+        <span class="seat-name">Seat A2</span>
+        <span class="time-left">52 min left</span>
+      </div>
+      <p class="status-sub">Reading hall · Ground floor · silent zone</p>
+      <a class="link-cta" href="active-session.html">Go to session →</a>
+    </div>
+
+    <a class="primary-cta" href="matrix.html">Book a new seat</a>
+
+    <p class="section-label">This week</p>
+    <div class="quick-grid">
+      <a class="quick-item" href="history.html">
+        <span class="num">6</span>
+        <span class="lbl">sessions completed</span>
+      </a>
+      <a class="quick-item" href="history.html">
+        <span class="num">0</span>
+        <span class="lbl">no-shows</span>
+      </a>
+    </div>
+  </main>
+
+  <nav class="tabbar">
+    <a class="active" href="dashboard.html"><span class="glyph">⌂</span>Home</a>
+    <a href="matrix.html"><span class="glyph">▦</span>Seats</a>
+    <a href="history.html"><span class="glyph">◷</span>History</a>
+    <a href="profile.html"><span class="glyph">◐</span>Profile</a>
+  </nav>
+      <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

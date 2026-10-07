@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session active — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10; --surface:#18181A; --surface-raised:#201F21;
+    --border:#2C2A2C; --border-soft:#232224;
+    --text-primary:#EBEAE6; --text-secondary:#8C8A86; --text-muted:#5D5B58;
+    --teal:#4FA893; --teal-fill:#1B2E2A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    line-height:1.5;
+  }
+  header{
+    padding:20px 20px 16px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .mark{font-family:'Fraunces',serif;font-size:18px;font-weight:600;}
+  .status-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    border:1px solid var(--teal);color:var(--teal);
+    padding:5px 10px;font-size:10.5px;letter-spacing:0.05em;
+    border-radius:2px;
+  }
+  .status-pill .dot{width:5px;height:5px;border-radius:50%;background:var(--teal);}
+
+  main{
+    flex:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:20px 24px;text-align:center;
+  }
+  .seat-line{color:var(--text-secondary);font-size:13px;margin-bottom:6px;}
+  .seat-line strong{color:var(--text-primary);font-weight:500;}
+
+  .timer{
+    font-family:'Fraunces',serif;
+    font-size:clamp(64px,20vw,96px);
+    font-weight:600;
+    line-height:1;
+    color:var(--teal);
+    margin:18px 0 6px;
+    font-variant-numeric:tabular-nums;
+  }
+  .timer-sub{font-size:12.5px;color:var(--text-muted);margin-bottom:44px;}
+
+  .timer-panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:28px 24px;
+    width:min(90vw,360px);
+    margin:18px 0 24px;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+  }
+  .session-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--teal-fill);
+    border:1px solid var(--teal);
+    color:var(--teal);
+    padding:4px 10px;
+    border-radius:2px;
+    font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;font-weight:500;
+  }
+  .session-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);}
+  .timer-split{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin:10px 0 6px;
+    width:100%;
+  }
+  .timer-unit{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:rgba(18, 38, 33, 0.45);
+    border:1px solid var(--border-soft);
+    border-radius:3px;
+    padding:10px 8px 8px;
+    min-width:clamp(66px, 20vw, 82px);
+    box-sizing:border-box;
+  }
+  .unit-val{
+    font-family:'Fraunces',serif;
+    font-size:clamp(34px, 8.5vw, 44px);
+    font-weight:600;
+    line-height:1;
+    color:var(--teal);
+    font-variant-numeric:tabular-nums;
+  }
+  .unit-lbl{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    font-weight:500;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--text-muted);
+    margin-top:6px;
+  }
+  .timer-sep{
+    font-family:'Fraunces',serif;
+    font-size:30px;
+    font-weight:500;
+    color:var(--teal);
+    opacity:0.6;
+    margin-top:-14px;
+    user-select:none;
+  }
+  .timer{
+    font-family:'Fraunces',serif;
+    font-size:clamp(52px,15vw,72px);
+    font-weight:600;
+    line-height:1;
+    color:var(--teal);
+    margin:6px 0 2px;
+    font-variant-numeric:tabular-nums;
+  }
+  .timer-sub{font-size:12px;color:var(--text-muted);margin:0;}
+  .session-meta-row{
+    display:flex;gap:12px;align-items:center;
+    font-size:11px;color:var(--text-secondary);
+    border-top:1px solid var(--border-soft);
+    padding-top:12px;margin-top:4px;width:100%;justify-content:center;
+  }
+
+  footer{
+    padding:16px 24px 26px;
+    border-top:1px solid var(--border-soft);
+    display:flex;gap:10px;
+  }
+  .btn-secondary{
+    flex:1;text-align:center;
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+    padding:15px;border-radius:2px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;text-decoration:none;
+  }
+  .btn-primary{
+    flex:1;text-align:center;
+    background:var(--teal);color:#0D1F1B;border:none;
+    padding:15px;border-radius:2px;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:500;font-size:13px;text-decoration:none;
+  }
+
+  @media (min-width:600px){
+    header,footer{padding-left:36px;padding-right:36px;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <span class="mark">Stacks</span>
+    <span class="status-pill"><span class="dot"></span> in session</span>
+  </header>
+
+  <main>
+    <p class="seat-line">Seat <strong>A2</strong> · Reading hall · Ground floor</p>
+
+    <div class="timer-panel">
+      <div class="session-badge"><span class="dot"></span> live session</div>
+      <div class="timer-split" role="timer" aria-live="polite" aria-label="Session time remaining">
+        <div class="timer-unit">
+          <span class="unit-val timer-hours">00</span>
+          <span class="unit-lbl">hours</span>
+        </div>
+        <span class="timer-sep">:</span>
+        <div class="timer-unit">
+          <span class="unit-val timer-minutes">52</span>
+          <span class="unit-lbl">minutes</span>
+        </div>
+        <span class="timer-sep">:</span>
+        <div class="timer-unit">
+          <span class="unit-val timer-seconds">18</span>
+          <span class="unit-lbl">seconds</span>
+        </div>
+      </div>
+      <div class="timer ring-inner" style="display:none;" aria-hidden="true">00:52:18</div>
+      <p class="timer-sub">Session ends at 5:42 pm</p>
+      <div class="session-meta-row">
+        <span>Silent zone</span>
+        <span>·</span>
+        <span>QR verified</span>
+        <span>·</span>
+        <span>2 hrs pass</span>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <a class="btn-secondary" href="dashboard.html">Back to home</a>
+    <a class="btn-primary" href="vacate-now.html">End session early</a>
+  </footer>
+      <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

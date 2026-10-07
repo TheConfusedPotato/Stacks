@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  (function() {
+    try {
+      var raw = localStorage.getItem('stacks.admin_session.v1');
+      var session = raw ? JSON.parse(raw) : null;
+      if (!session || session.role !== 'admin') {
+        window.location.replace('admin-login.html');
+      }
+    } catch (e) {
+      window.location.replace('admin-login.html');
+    }
+  })();
+</script>
+<title>Admin dashboard — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10;
+    --surface:#18181A;
+    --surface-raised:#201F21;
+    --border:#2C2A2C;
+    --border-soft:#232224;
+    --text-primary:#EBEAE6;
+    --text-secondary:#8C8A86;
+    --text-muted:#5D5B58;
+    --teal:#4FA893;
+    --teal-fill:#1B2E2A;
+    --amber:#D2984E;
+    --amber-fill:#2E271C;
+    --red:#BD564C;
+    --red-fill:#2B1E1D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{background:var(--bg);}
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    line-height:1.5;
+    padding-bottom:88px;
+    max-width:680px;
+    margin:0 auto;
+    border-left:1px solid var(--border-soft);
+    border-right:1px solid var(--border-soft);
+  }
+  header{
+    padding:18px 20px;
+    display:flex;justify-content:space-between;align-items:center;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .mark{font-family:'Fraunces',serif;font-size:18px;font-weight:600;}
+  .role-tag{
+    font-size:9.5px;color:var(--amber);border:1px solid var(--amber);
+    padding:3px 7px;border-radius:2px;letter-spacing:0.04em;margin-left:8px;
+  }
+  .live-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:10.5px;color:var(--teal);
+  }
+  .live-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);}
+
+  main{flex:1;padding:22px 20px 10px;}
+
+  .stat-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+    margin-bottom:26px;
+  }
+  .stat-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;padding:16px 12px;text-align:center;
+    transition:transform 0.15s ease;
+  }
+  .stat-card .num{
+    font-family:'Fraunces',serif;font-size:26px;font-weight:600;display:block;margin-bottom:4px;
+  }
+  .stat-card .lbl{font-size:10px;color:var(--text-muted);letter-spacing:0.02em;}
+  .stat-card.teal{border-top:2px solid var(--teal);}
+  .stat-card.teal .num{color:var(--teal);}
+  .stat-card.amber{border-top:2px solid var(--amber);}
+  .stat-card.amber .num{color:var(--amber);}
+  .stat-card.red{border-top:2px solid var(--red);}
+  .stat-card.red .num{color:var(--red);}
+
+  .section-header{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:12px;
+  }
+  .section-label{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+  .section-link{
+    font-size:11px;color:var(--text-secondary);text-decoration:none;
+    border-bottom:1px solid var(--border);
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .section-link:hover{color:var(--teal);border-color:var(--teal);}
+
+  .alert-feed{margin-bottom:28px;}
+  .alert-card{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--red-fill);
+    border:1px solid var(--red);
+    border-radius:2px;
+    padding:14px 16px;
+    margin-bottom:10px;
+    transition:background 0.15s ease;
+  }
+  .alert-card .left{display:flex;flex-direction:column;gap:3px;}
+  .alert-card .seat{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--red);}
+  .alert-card .meta{font-size:11px;color:var(--text-secondary);}
+  .alert-card .action{
+    font-size:11px;color:var(--red);
+    border:1px solid var(--red);
+    background:transparent;
+    padding:7px 12px;border-radius:2px;
+    white-space:nowrap;
+    cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;
+    transition:background 0.15s ease;
+  }
+  .alert-card .action:hover{background:rgba(189,86,76,0.18);}
+
+  .alert-card.amber-tone{background:var(--amber-fill);border-color:var(--amber);}
+  .alert-card.amber-tone .seat{color:var(--amber);}
+  .alert-card.amber-tone .action{color:var(--amber);border-color:var(--amber);}
+  .alert-card.amber-tone .action:hover{background:rgba(210,152,78,0.18);}
+
+  .mini-matrix{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:6px;
+    margin-bottom:28px;
+  }
+  @media (min-width:540px){
+    .mini-matrix{grid-template-columns:repeat(10,1fr);gap:5px;}
+  }
+  .mini-seat{
+    aspect-ratio:1;border-radius:2px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:500;
+    cursor:pointer;
+    min-height:28px;
+    transition:transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .mini-seat:hover{transform:translateY(-2px);border-color:var(--text-muted);}
+  .mini-seat.free{
+    background:var(--teal-fill);
+    border-color:var(--teal);
+    color:var(--teal);
+  }
+  .mini-seat.occupied{
+    background:var(--surface);
+    border-color:var(--border-soft);
+    opacity:0.45;
+    color:var(--text-muted);
+  }
+  .mini-seat.pending{
+    background:var(--amber-fill);
+    border-color:var(--amber);
+    color:var(--amber);
+  }
+  .mini-seat.overstay{
+    background:var(--red-fill);
+    border-color:var(--red);
+    color:var(--red);
+  }
+  .mini-seat.maintenance{
+    background:var(--surface-raised);
+    border-color:var(--border);
+    opacity:0.45;
+    color:var(--text-muted);
+  }
+
+  .legend{
+    display:flex;gap:14px;flex-wrap:wrap;
+    font-size:10px;color:var(--text-muted);margin-bottom:28px;
+  }
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .legend-dot{width:8px;height:8px;border-radius:2px;}
+  .legend-dot.free{background:var(--teal);}
+  .legend-dot.occupied{background:var(--text-muted);opacity:0.5;}
+  .legend-dot.pending{background:var(--amber);}
+  .legend-dot.overstay{background:var(--red);}
+  .legend-dot.maintenance{background:var(--surface-raised);border:1px solid var(--border);}
+
+  nav.tabbar{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:680px;
+    display:flex;background:var(--bg);
+    border-top:1px solid var(--border-soft);
+    border-left:1px solid var(--border-soft);
+    border-right:1px solid var(--border-soft);
+    padding:10px 12px 14px;
+    z-index:100;
+  }
+  nav.tabbar a{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+    text-decoration:none;color:var(--text-muted);font-size:10px;
+    transition:color 0.15s ease;
+  }
+  nav.tabbar a:hover{color:var(--text-secondary);}
+  nav.tabbar a.active{color:var(--amber);}
+  nav.tabbar .glyph{font-family:'Fraunces',serif;font-size:16px;}
+
+  @media (max-width:480px){
+    body{border-left:none;border-right:none;}
+    nav.tabbar{border-left:none;border-right:none;}
+    .mini-matrix{grid-template-columns:repeat(4,1fr);gap:8px;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <span class="mark">Stacks</span>
+      <span class="role-tag">admin</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="live-pill"><span class="dot"></span> live</span>
+      <a href="admin-login.html" id="admin-logout-btn" style="color:var(--red);text-decoration:none;font-size:11px;border:1px solid #4A2422;padding:3px 8px;border-radius:2px;">Sign out</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="stat-grid">
+      <div class="stat-card teal"><span class="num">6</span><span class="lbl">free now</span></div>
+      <div class="stat-card amber"><span class="num">5</span><span class="lbl">occupied</span></div>
+      <div class="stat-card red"><span class="num">1</span><span class="lbl">flagged</span></div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-label">needs attention</span>
+      <a class="section-link" href="matrix.html?role=admin">view all</a>
+    </div>
+    <div class="alert-feed">
+      <div class="alert-card">
+        <div class="left">
+          <span class="seat">Seat B4</span>
+          <span class="meta">Overstayed by 6 min · Silent zone</span>
+        </div>
+        <span class="action">Clear seat</span>
+      </div>
+      <div class="alert-card amber-tone">
+        <div class="left">
+          <span class="seat">Seat B1</span>
+          <span class="meta">Booked hold, waiting QR check-in</span>
+        </div>
+        <span class="action">Watch</span>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-label">floor overview · Ground floor (100 seats)</span>
+      <a class="section-link" href="matrix.html?role=admin">full matrix</a>
+    </div>
+    <div class="mini-matrix">
+      <div class="mini-seat free">A1</div>
+      <div class="mini-seat occupied">A2</div>
+      <div class="mini-seat occupied">A3</div>
+      <div class="mini-seat free">A4</div>
+      <div class="mini-seat pending">B1</div>
+      <div class="mini-seat free">B2</div>
+      <div class="mini-seat free">B3</div>
+      <div class="mini-seat overstay">B4</div>
+      <div class="mini-seat occupied">C1</div>
+      <div class="mini-seat occupied">C2</div>
+      <div class="mini-seat free">C3</div>
+      <div class="mini-seat free">C4</div>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot free"></span>free</span>
+      <span class="legend-item"><span class="legend-dot occupied"></span>occupied</span>
+      <span class="legend-item"><span class="legend-dot pending"></span>unconfirmed</span>
+      <span class="legend-item"><span class="legend-dot overstay"></span>flagged</span>
+      <span class="legend-item"><span class="legend-dot maintenance"></span>maintenance</span>
+    </div>
+  </main>
+
+  <nav class="tabbar">
+    <a class="active" href="admin-dashboard.html"><span class="glyph">⌂</span>Dashboard</a>
+    <a href="matrix.html?role=admin"><span class="glyph">▦</span>Seats</a>
+    <a href="javascript:void(0)" class="admin-users-tab"><span class="glyph">☰</span>Users</a>
+    <a href="javascript:void(0)" class="admin-reports-tab"><span class="glyph">◐</span>Reports</a>
+  </nav>
+  <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

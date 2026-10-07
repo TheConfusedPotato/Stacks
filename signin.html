@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10;
+    --surface:#18181A;
+    --surface-raised:#201F21;
+    --border:#2C2A2C;
+    --border-soft:#232224;
+    --text-primary:#EBEAE6;
+    --text-secondary:#8C8A86;
+    --text-muted:#5D5B58;
+    --teal:#4FA893;
+    --teal-dim:#2E4C45;
+    --amber:#D2984E;
+    --red:#BD564C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{background:var(--bg);}
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px 18px;
+    line-height:1.5;
+  }
+  .card{
+    width:100%;
+    max-width:400px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    position:relative;
+    padding:0;
+  }
+  .spine{
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:22px;
+    border-right:1px solid var(--border-soft);
+    background-image:repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 15px,
+      var(--border-soft) 15px,
+      var(--border-soft) 16px
+    );
+  }
+  .content{
+    padding:36px 28px 32px 44px;
+  }
+  .catalog-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:34px;
+  }
+  .mark{
+    font-family:'Fraunces',serif;
+    font-size:20px;
+    font-weight:600;
+    letter-spacing:0.01em;
+  }
+  .call-number{
+    font-size:11px;
+    color:var(--text-muted);
+    letter-spacing:0.04em;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(28px,7vw,32px);
+    line-height:1.15;
+    margin-bottom:8px;
+  }
+  .sub{
+    color:var(--text-secondary);
+    font-size:13px;
+    margin-bottom:32px;
+    max-width:30ch;
+  }
+  form{display:flex;flex-direction:column;gap:18px;}
+  .field{display:flex;flex-direction:column;gap:8px;}
+  label{
+    font-size:11px;
+    color:var(--text-secondary);
+    letter-spacing:0.03em;
+  }
+  input{
+    background:var(--surface-raised);
+    border:1px solid var(--border);
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+    padding:14px 14px;
+    border-radius:2px;
+    outline:none;
+    width:100%;
+  }
+  input:focus{
+    border-color:var(--teal);
+    box-shadow:0 0 0 1px var(--teal);
+  }
+  input::placeholder{color:var(--text-muted);}
+  .field-hint{
+    font-size:11px;
+    color:var(--text-muted);
+  }
+  .forgot{
+    align-self:flex-end;
+    font-size:12px;
+    color:var(--text-secondary);
+    text-decoration:none;
+    border-bottom:1px solid var(--border);
+    padding-bottom:1px;
+  }
+  .cta{
+    margin-top:8px;
+    background:var(--teal);
+    color:#0D1F1B;
+    border:none;
+    padding:16px;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:500;
+    font-size:14px;
+    letter-spacing:0.02em;
+    border-radius:2px;
+    cursor:pointer;
+    width:100%;
+  }
+  .divider{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:26px 0 20px;
+    color:var(--text-muted);
+    font-size:11px;
+  }
+  .divider::before,.divider::after{
+    content:'';
+    flex:1;
+    height:1px;
+    background:var(--border-soft);
+  }
+  .footer-row{
+    text-align:center;
+    font-size:13px;
+    color:var(--text-secondary);
+  }
+  .footer-row a{
+    color:var(--text-primary);
+    text-decoration:none;
+    border-bottom:1px solid var(--teal);
+    padding-bottom:1px;
+  }
+  .status-strip{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--surface-raised);
+    border:1px solid var(--border);
+    border-left:2px solid var(--teal);
+    padding:10px 12px;
+    font-size:11.5px;
+    color:var(--text-secondary);
+    margin-top:24px;
+    border-radius:2px;
+  }
+  .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--teal);
+    flex-shrink:0;
+  }
+  @media (min-width:480px){
+    .content{padding:44px 40px 40px 56px;}
+    .spine{width:26px;}
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="spine"></div>
+    <div class="content">
+      <div class="catalog-row">
+        <span class="mark">Stacks</span>
+        <span class="call-number">PICT / LIB-04</span>
+      </div>
+
+      <h1>Sign in</h1>
+      <p class="sub">Use your college credentials to access seat booking.</p>
+
+      <form>
+        <div class="field">
+          <label for="email">College email</label>
+          <input id="email" type="email" placeholder="yourname@pict.edu" autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+          <a class="forgot" href="forgot-password.html">Forgot password?</a>
+        </div>
+        <button class="cta" type="submit">Sign in</button>
+      </form>
+
+      <div class="divider">no other login method</div>
+
+      <div class="status-strip">
+        <span class="dot"></span>
+        <span>91 seats free right now in the Reading Hall</span>
+      </div>
+
+      <p class="footer-row" style="margin-top:22px;">
+        New here? <a href="signup.html">Create an account</a>
+      </p>
+    </div>
+  </div>
+  <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

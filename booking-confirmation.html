@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Booking confirmed — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10; --surface:#18181A; --surface-raised:#201F21;
+    --border:#2C2A2C; --border-soft:#232224;
+    --text-primary:#EBEAE6; --text-secondary:#8C8A86; --text-muted:#5D5B58;
+    --teal:#4FA893; --teal-fill:#1B2E2A;
+    --amber:#D2984E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:28px 20px;
+    line-height:1.5;
+    text-align:center;
+  }
+  .stamp-ring{
+    width:64px;height:64px;
+    border:2px solid var(--teal);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:24px;
+  }
+  .stamp-ring .check{font-family:'Fraunces',serif;font-size:26px;color:var(--teal);}
+
+  h1{
+    font-family:'Fraunces',serif;font-weight:500;
+    font-size:clamp(26px,7vw,30px);margin-bottom:10px;
+  }
+  .sub{color:var(--text-secondary);font-size:13.5px;max-width:32ch;margin-bottom:32px;}
+
+  .ticket{
+    width:100%;max-width:360px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:22px;
+    margin-bottom:20px;
+  }
+  .ticket .seat-name{
+    font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin-bottom:4px;
+  }
+  .ticket .location{font-size:12.5px;color:var(--text-secondary);margin-bottom:18px;}
+  .ticket-divider{
+    border-top:1px dashed var(--border);
+    margin:0 0 18px;
+  }
+  .ticket-rows{display:flex;justify-content:space-between;text-align:left;}
+  .ticket-row .lbl{font-size:10.5px;color:var(--text-muted);margin-bottom:4px;}
+  .ticket-row .val{font-size:14px;color:var(--text-primary);}
+
+  .countdown-chip{
+    display:inline-flex;align-items:center;gap:8px;
+    border:1px solid var(--amber);color:var(--amber);
+    padding:8px 16px;border-radius:2px;
+    font-size:13px;font-weight:500;
+    margin-bottom:32px;
+  }
+  .countdown-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);}
+
+  .cta{
+    display:block;width:100%;max-width:360px;text-align:center;
+    background:var(--teal);color:#0D1F1B;border:none;
+    padding:17px;font-family:'IBM Plex Mono',monospace;
+    font-weight:500;font-size:14.5px;letter-spacing:0.02em;
+    border-radius:2px;text-decoration:none;margin-bottom:14px;
+  }
+  .secondary-link{
+    font-size:12.5px;color:var(--text-muted);text-decoration:none;
+  }
+</style>
+</head>
+<body>
+  <div class="stamp-ring"><span class="check">✓</span></div>
+  <h1>Seat booked</h1>
+  <p class="sub">Head to your seat and scan its QR to start your session.</p>
+
+  <div class="ticket">
+    <div class="seat-name">A2</div>
+    <p class="location">Reading hall · Ground floor · silent zone</p>
+    <div class="ticket-divider"></div>
+    <div class="ticket-rows">
+      <div class="ticket-row">
+        <div class="lbl">duration</div>
+        <div class="val">2 hours</div>
+      </div>
+      <div class="ticket-row">
+        <div class="lbl">booked at</div>
+        <div class="val">3:42 pm</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="countdown-chip"><span class="dot"></span> 09:31 left to scan</div>
+
+  <a class="cta" href="scan.html">Scan QR at seat</a>
+  <a class="secondary-link" href="dashboard.html">I'll head there in a moment</a>
+      <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

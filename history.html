@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>History — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10; --surface:#18181A; --surface-raised:#201F21;
+    --border:#2C2A2C; --border-soft:#232224;
+    --text-primary:#EBEAE6; --text-secondary:#8C8A86; --text-muted:#5D5B58;
+    --teal:#4FA893; --amber:#D2984E; --red:#BD564C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    line-height:1.5;
+    padding-bottom:84px;
+  }
+  header{
+    padding:18px 20px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .mark{font-family:'Fraunces',serif;font-size:18px;font-weight:600;display:block;margin-bottom:2px;}
+  .call-number{font-size:11px;color:var(--text-muted);}
+
+  main{flex:1;padding:20px 20px 10px;}
+
+  .summary-row{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;
+    margin-bottom:26px;
+  }
+  .summary-item{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:14px 12px;
+    text-align:center;
+  }
+  .summary-item .num{
+    font-family:'Fraunces',serif;font-size:22px;font-weight:600;display:block;margin-bottom:4px;
+  }
+  .summary-item .lbl{font-size:9.5px;color:var(--text-muted);letter-spacing:0.02em;}
+  .summary-item.teal .num{color:var(--teal);}
+  .summary-item.amber .num{color:var(--amber);}
+  .summary-item.red .num{color:var(--red);}
+
+  .section-label{
+    font-size:11px;color:var(--text-muted);letter-spacing:0.04em;margin:20px 0 10px;
+  }
+  .section-label:first-of-type{margin-top:0;}
+
+  .entry{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 4px;
+    border-top:1px solid var(--border-soft);
+  }
+  .entry:last-child{border-bottom:1px solid var(--border-soft);}
+  .entry-left{display:flex;flex-direction:column;gap:4px;}
+  .entry-seat{font-size:14px;color:var(--text-primary);font-weight:500;}
+  .entry-meta{font-size:11px;color:var(--text-muted);}
+  .entry-tag{
+    font-size:10px;padding:4px 8px;border-radius:2px;
+    border:1px solid var(--border);color:var(--text-secondary);
+    white-space:nowrap;
+  }
+  .entry-tag.completed{border-color:var(--teal);color:var(--teal);}
+  .entry-tag.no-show{border-color:var(--amber);color:var(--amber);}
+  .entry-tag.overstay{border-color:var(--red);color:var(--red);}
+
+  nav.tabbar{
+    position:fixed;bottom:0;left:0;right:0;
+    display:flex;
+    background:var(--bg);
+    border-top:1px solid var(--border-soft);
+    padding:10px 12px 14px;
+  }
+  nav.tabbar a{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+    text-decoration:none;color:var(--text-muted);font-size:10px;
+  }
+  nav.tabbar a.active{color:var(--teal);}
+  nav.tabbar .glyph{font-family:'Fraunces',serif;font-size:16px;}
+
+  @media (min-width:600px){
+    header,main{padding-left:36px;padding-right:36px;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <span class="mark">History</span>
+    <span class="call-number">Past bookings & sessions</span>
+  </header>
+
+  <main>
+    <div class="summary-row">
+      <div class="summary-item teal"><span class="num">6</span><span class="lbl">completed</span></div>
+      <div class="summary-item amber"><span class="num">1</span><span class="lbl">no-shows</span></div>
+      <div class="summary-item red"><span class="num">0</span><span class="lbl">overstays</span></div>
+    </div>
+
+    <p class="section-label">Today</p>
+    <div class="entry">
+      <div class="entry-left">
+        <span class="entry-seat">Seat A2</span>
+        <span class="entry-meta">3:42 pm – 5:42 pm · 2 hrs</span>
+      </div>
+      <span class="entry-tag completed">completed</span>
+    </div>
+
+    <p class="section-label">This week</p>
+    <div class="entry">
+      <div class="entry-left">
+        <span class="entry-seat">Seat C4</span>
+        <span class="entry-meta">Tue · 11:00 am – 1:00 pm</span>
+      </div>
+      <span class="entry-tag completed">completed</span>
+    </div>
+    <div class="entry">
+      <div class="entry-left">
+        <span class="entry-seat">Seat B1</span>
+        <span class="entry-meta">Mon · booked, not scanned</span>
+      </div>
+      <span class="entry-tag no-show">no-show</span>
+    </div>
+    <div class="entry">
+      <div class="entry-left">
+        <span class="entry-seat">Seat D3</span>
+        <span class="entry-meta">Mon · 9:00 am – 11:00 am</span>
+      </div>
+      <span class="entry-tag completed">completed</span>
+    </div>
+  </main>
+
+  <nav class="tabbar">
+    <a href="dashboard.html"><span class="glyph">⌂</span>Home</a>
+    <a href="matrix.html"><span class="glyph">▦</span>Seats</a>
+    <a class="active" href="history.html"><span class="glyph">◷</span>History</a>
+    <a href="profile.html"><span class="glyph">◐</span>Profile</a>
+  </nav>
+      <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>

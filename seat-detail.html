@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seat A2 — Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F0F10; --surface:#18181A; --surface-raised:#201F21;
+    --border:#2C2A2C; --border-soft:#232224;
+    --text-primary:#EBEAE6; --text-secondary:#8C8A86; --text-muted:#5D5B58;
+    --teal:#4FA893; --teal-fill:#1B2E2A;
+    --amber:#D2984E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);}
+  body{
+    color:var(--text-primary);
+    font-family:'IBM Plex Mono',monospace;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    line-height:1.5;
+  }
+  header{
+    padding:18px 20px;
+    display:flex;align-items:center;gap:14px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .back{
+    font-family:'Fraunces',serif;font-size:18px;
+    color:var(--text-secondary);text-decoration:none;
+  }
+  .mark{font-family:'Fraunces',serif;font-size:17px;font-weight:600;}
+
+  main{flex:1;padding:24px 20px 16px;}
+
+  .seat-hero{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    margin-bottom:6px;
+  }
+  .seat-hero h1{
+    font-family:'Fraunces',serif;font-size:clamp(30px,8vw,36px);font-weight:600;
+  }
+  .status-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    border:1px solid var(--teal);color:var(--teal);
+    padding:5px 10px;font-size:10.5px;letter-spacing:0.05em;
+    border-radius:2px;margin-top:8px;
+  }
+  .status-pill .dot{width:5px;height:5px;border-radius:50%;background:var(--teal);}
+
+  .location{color:var(--text-secondary);font-size:13px;margin:14px 0 24px;}
+
+  .attributes{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    margin-bottom:26px;
+  }
+  .attr{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:14px;
+  }
+  .attr .lbl{font-size:10.5px;color:var(--text-muted);margin-bottom:6px;}
+  .attr .val{font-size:14px;color:var(--text-primary);}
+
+  .duration-section{margin-bottom:26px;}
+  .section-label{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;margin-bottom:12px;}
+  .duration-row{display:flex;gap:10px;}
+  .duration-opt{
+    flex:1;text-align:center;
+    padding:14px 8px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:2px;
+    font-size:13px;color:var(--text-secondary);
+  }
+  .duration-opt.selected{
+    border-color:var(--teal);
+    background:var(--teal-fill);
+    color:var(--teal);
+    font-weight:500;
+  }
+
+  .policy-note{
+    display:flex;gap:10px;align-items:flex-start;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:2px solid var(--amber);
+    padding:12px 14px;border-radius:2px;
+  }
+  .policy-note .glyph{font-family:'Fraunces',serif;color:var(--amber);font-size:14px;flex-shrink:0;}
+  .policy-note p{font-size:11.5px;color:var(--text-secondary);line-height:1.5;}
+
+  footer{
+    padding:16px 20px 24px;
+    border-top:1px solid var(--border-soft);
+  }
+  .cta{
+    display:block;width:100%;text-align:center;
+    background:var(--teal);color:#0D1F1B;border:none;
+    padding:17px;font-family:'IBM Plex Mono',monospace;
+    font-weight:500;font-size:14.5px;letter-spacing:0.02em;
+    border-radius:2px;text-decoration:none;
+  }
+
+  @media (min-width:600px){
+    header,main,footer{padding-left:36px;padding-right:36px;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <a class="back" href="matrix.html">←</a>
+    <span class="mark">Stacks</span>
+  </header>
+
+  <main>
+    <div class="seat-hero">
+      <h1>Seat A2</h1>
+    </div>
+    <span class="status-pill"><span class="dot"></span> free now</span>
+    <p class="location">Reading hall · Ground floor · silent zone</p>
+
+    <div class="attributes">
+      <div class="attr"><div class="lbl">power outlet</div><div class="val">Yes, at desk</div></div>
+      <div class="attr"><div class="lbl">near window</div><div class="val">No</div></div>
+      <div class="attr"><div class="lbl">noise level</div><div class="val">Silent zone</div></div>
+      <div class="attr"><div class="lbl">seat type</div><div class="val">Individual desk</div></div>
+    </div>
+
+    <div class="duration-section">
+      <p class="section-label">Book for</p>
+      <div class="duration-row">
+        <div class="duration-opt">1 hr</div>
+        <div class="duration-opt selected">2 hrs</div>
+        <div class="duration-opt">4 hrs</div>
+      </div>
+    </div>
+
+    <div class="policy-note">
+      <span class="glyph">＊</span>
+      <p>You'll have 10 minutes to scan the seat's QR once booked, or it's released automatically.</p>
+    </div>
+
+    <div class="policy-note notif-policy" style="margin-top:12px;background:var(--surface);border-color:var(--border);display:flex;align-items:center;justify-content:space-between;padding:12px 14px;">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <span class="glyph" style="color:var(--teal);font-size:16px;">🔔</span>
+        <div>
+          <div style="font-size:12px;color:var(--text-primary);font-weight:500;">Vacate notification & chime</div>
+          <div style="font-size:11px;color:var(--text-secondary);">Alerts you the minute your session ends</div>
+        </div>
+      </div>
+      <button id="enable-notif-btn" type="button" style="background:#1B2E2A;border:1px solid var(--teal);color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 12px;border-radius:2px;cursor:pointer;white-space:nowrap;">
+        Enable alerts
+      </button>
+    </div>
+  </main>
+
+  <footer>
+    <a class="cta" href="booking-confirmation.html">Book seat A2</a>
+  </footer>
+      <!-- Stacks Client-Side Backend & Controllers -->
+  <script type="module" src="scripts/supabase.js?v=2.3"></script>
+  <script src="scripts/constants.js?v=2.2"></script>
+  <script src="scripts/min-heap.js?v=2.2"></script>
+  <script src="scripts/seat-store.js?v=2.2"></script>
+  <script src="scripts/timer-queue.js?v=2.2"></script>
+  <script src="scripts/auth-store.js?v=2.2"></script>
+  <script src="scripts/history-store.js?v=2.2"></script>
+  <script src="scripts/notification-store.js?v=2.2"></script>
+  <script src="scripts/app.js?v=2.2"></script>
+</body>
+</html>
