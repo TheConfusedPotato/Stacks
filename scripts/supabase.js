@@ -6,9 +6,9 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const norm = (id) => (id || "").trim().toUpperCase();
 
-// Sign in anonymously only when an action needs it (reading seats needs no session)
+// Session cache — flushed after any sign-in or sign-out.
 let sessionPromise = null;
-// After: require a real session, never create anon
+
 async function ensureSession() {
   if (!sessionPromise) {
     sessionPromise = (async () => {
@@ -18,6 +18,18 @@ async function ensureSession() {
     })().catch((e) => { sessionPromise = null; throw e; });
   }
   return sessionPromise;
+}
+
+// Returns the current session, waiting up to ~1 s for Supabase to rehydrate
+// from storage after a page load. Falls back to null — never throws.
+async function getSessionWithRetry() {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) return session;
+    // Give the Supabase client a moment to finish reading its stored token.
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  return null;
 }
 
 // Returns true/false from the function. THROWS on any real error.
@@ -103,16 +115,22 @@ async updateProfile(patch) {
 },
 
   // ---- staff (real Supabase auth; the database decides who is admin) -----
+
+  // Safe to call on every page load — waits for the session to rehydrate
+  // from localStorage before calling the DB, so no false "not admin" on reload.
   async isAdmin() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getSessionWithRetry();
     if (!session || session.user.is_anonymous) return false;
     const { data, error } = await supabase.rpc("is_admin");
     if (error) { console.error("[Supabase] is_admin:", error); return false; }
     return data === true;
   },
+
   async adminSignIn(email, password) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    sessionPromise = null; // flush stale cache so ensureSession re-reads the new session
+
     if (!(await StacksSupabase.isAdmin())) {
       await supabase.auth.signOut();
       sessionPromise = null;
@@ -120,6 +138,7 @@ async updateProfile(patch) {
     }
     return true;
   },
+
   async signOut() {
     sessionPromise = null;
     await supabase.auth.signOut();

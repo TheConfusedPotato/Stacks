@@ -3,19 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script>
-  (function() {
-    try {
-      var raw = localStorage.getItem('stacks.admin_session.v1');
-      var session = raw ? JSON.parse(raw) : null;
-      if (!session || session.role !== 'admin') {
-        window.location.replace('admin-login.html');
-      }
-    } catch (e) {
-      window.location.replace('admin-login.html');
-    }
-  })();
-</script>
+<!-- Auth guard is handled by initAdminDashboard() in app.js after Supabase loads -->
 <title>Admin dashboard — Stacks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

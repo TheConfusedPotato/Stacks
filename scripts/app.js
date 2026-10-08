@@ -1122,7 +1122,11 @@
     }
 
     // Grace period timer: 5 minutes from session end (or now)
-    const graceEndsAt = (seat?.sessionEndsAt || Date.now()) + TIMER_RULES.VACATE_WINDOW_MS;
+    const now = Date.now();
+    const sessionEnd = seat?.sessionEndsAt ?? now;
+    // If session already expired naturally, grace runs from sessionEndsAt.
+    // If user is ending early (sessionEndsAt is still in the future), grace runs from now.
+    const graceEndsAt = (sessionEnd > now ? now : sessionEnd) + TIMER_RULES.VACATE_WINDOW_MS;
     const timerEl = document.querySelector('.timer');
     let timerId;
 
@@ -1405,7 +1409,7 @@
           showToast('Staff authenticated. Redirecting...', 'teal');
           setTimeout(() => {
             window.location.href = 'admin-dashboard.html';
-          }, 200);
+          }, 800);
         } catch (err) {
           showToast(err.message || 'Staff login failed', 'red');
         }
@@ -1574,6 +1578,9 @@
     if (needsSeats.includes(page) && typeof seatStore !== 'undefined' && seatStore.ready) {
       await Promise.race([seatStore.ready, new Promise((r) => setTimeout(r, 4000))]);
     }
+    if (typeof authStore !== 'undefined' && authStore.ready) {
+      await Promise.race([authStore.ready, new Promise((r) => setTimeout(r, 4000))]);
+    }
 
     switch (page) {
       case 'landing.html':
@@ -1632,7 +1639,7 @@
         initAdminLogin();
         break;
       case 'admin-dashboard.html':
-        initAdminDashboard();
+        await initAdminDashboard();
         break;
     }
   }

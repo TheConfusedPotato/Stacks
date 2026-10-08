@@ -69,10 +69,6 @@ class AuthStore {
     let profile = null;
     try {
       profile = await h.fetchProfile();
-      
-      console.log('[refresh] profile:', profile);
-      console.log('[refresh] session email:', email);
-      console.log('[refresh] _currentUser:', this._currentUser);
 
     } catch (e) {
       console.warn('[AuthStore] profile fetch failed:', e);
