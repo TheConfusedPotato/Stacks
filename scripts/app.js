@@ -250,23 +250,17 @@
     }
 
     if (form) {
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = emailInput?.value || '';
         const password = passwordInput?.value || '';
-
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const email = emailInput?.value || '';
-          const password = passwordInput?.value || '';
-          const res = await authStore.login(email, password);
-          if (res.success) {
-            showToast('Signed in successfully', 'teal');
-            setTimeout(() => { window.location.href = 'dashboard.html'; }, 300);
-          } else {
-            showToast(res.message || 'Login failed', 'red');
-          }
-        });
+        const res = await authStore.login(email, password);
+        if (res.success) {
+          showToast('Signed in successfully', 'teal');
+          setTimeout(() => { window.location.href = 'dashboard.html'; }, 300);
+        } else {
+          showToast(res.message || 'Login failed', 'red');
+        }
       });
     }
   }
@@ -280,14 +274,22 @@
     const confirmInput = document.getElementById('confirm');
 
     if (form) {
-      // FIX — make the handler async and await
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        // ... validation unchanged ...
+        const name = nameInput?.value.trim() || '';
+        const email = emailInput?.value.trim() || '';
+        const password = passwordInput?.value || '';
+        const confirm = confirmInput?.value || '';
+
+        if (!name) { showToast('Please enter your name', 'amber'); return; }
+        if (!email) { showToast('Please enter your email', 'amber'); return; }
+        if (!password) { showToast('Please enter a password', 'amber'); return; }
+        if (password !== confirm) { showToast('Passwords do not match', 'amber'); return; }
+
         const res = await authStore.startSignup({ name, email, password });
         if (res.success) {
           showToast('Verification code dispatched', 'teal');
-          setTimeout(() => { window.location.href = 'otp-verification.html'; }, 300);
+          setTimeout(() => { window.location.href = res.needsOtp ? 'otp-verification.html' : 'onboarding.html'; }, 300);
         } else {
           showToast(res.message || 'Signup failed', 'red');
         }
@@ -357,7 +359,7 @@
 
     const form = document.querySelector('form');
     if (form) {
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
         let code = '';
         inputs.forEach((inp) => (code += (inp.value || '').trim()));
@@ -367,14 +369,14 @@
           return;
         }
 
-        const success = authStore.verifyOtp(code);
-        if (success) {
+        const res = await authStore.verifyOtp(code);
+        if (res.success) {
           showToast('Account verified!', 'teal');
           setTimeout(() => {
             window.location.href = 'onboarding.html';
           }, 300);
         } else {
-          showToast('Please enter the 6-digit verification code', 'amber');
+          showToast(res.message || 'Invalid or expired code', 'red');
         }
       });
     }

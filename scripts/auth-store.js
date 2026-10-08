@@ -105,6 +105,7 @@ class AuthStore {
 
   // Never stores the password. Only name + email are kept (to show on the OTP screen).
   async startSignup({ name, email, password }) {
+    
     const cleanEmail = (email || '').trim().toLowerCase();
     try {
       const { needsOtp } = await this._helper().signUp({
