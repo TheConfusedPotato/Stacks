@@ -1,20 +1,34 @@
 /**
  * history-store.js
- * History session management.
+ * Read-only view of the student's `seat_history` rows in Supabase.
+ * History is WRITTEN by the database (vacate_seat / expire_seats), so it cannot be
+ * forged from the browser and follows the student across devices.
+ * Call `await historyStore.load()` before reading (app.js does this on history pages).
  */
 class HistoryStore {
   constructor() {
     this._entries = [];
-    this._load();
-    const hasDiscussion = this._entries.some(e => e.zone && e.zone.toLowerCase().includes('discussion'));
-    if (this._entries.length === 0 || hasDiscussion) {
-      this._seedDefaults();
-      this._save();
+    try {
+      localStorage.removeItem('stacks.history.v1');
+      if (typeof STORAGE_KEYS !== 'undefined') localStorage.removeItem(STORAGE_KEYS.HISTORY);
+    } catch (_) {}
+  }
+
+  async load() {
+    const helper = typeof window !== 'undefined' ? window.StacksSupabase : null;
+    if (!helper) return;
+    try {
+      const rows = await helper.fetchHistory();
+      this._entries = rows.map((r) => this._fromRow(r));
+    } catch (e) {
+      console.warn('[HistoryStore] load failed:', e);
     }
   }
+
   getAll() {
     return [...this._entries].sort((a, b) => b.timestamp - a.timestamp);
   }
+
   getStats() {
     let completed = 0, noShows = 0, overstays = 0;
     for (const item of this._entries) {
@@ -24,49 +38,58 @@ class HistoryStore {
     }
     return { completed, noShows, overstays, total: this._entries.length };
   }
-  addEntry(entry) {
-    const record = {
-      id: 'HIST-' + Date.now(),
-      seatId: entry.seatId,
-      zone: entry.zone || 'Silent zone',
-      duration: entry.duration || '2 hrs',
-      timeLabel: entry.timeLabel || this._formatTimeRange(Date.now()),
-      status: entry.status || HISTORY_STATUS.COMPLETED,
-      timestamp: Date.now(),
-      group: 'Today',
+
+  // Kept so older callers do not crash. The database already logged it.
+  addEntry() {
+    return null;
+  }
+
+  _zoneFor(seatId) {
+    const r = String(seatId || '')[0];
+    if (['E', 'F', 'G'].includes(r)) return 'Near power';
+    if (['H', 'I', 'J'].includes(r)) return 'Window row';
+    return 'Silent zone';
+  }
+
+  _clock(d) {
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+  }
+
+  _fromRow(r) {
+    const ended = new Date(r.ended_at);
+    const started = new Date(r.started_at);
+    const now = new Date();
+    const dayMs = 86400000;
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const age = startOfToday - new Date(ended.getFullYear(), ended.getMonth(), ended.getDate()).getTime();
+
+    let group = 'Older';
+    if (age <= 0) group = 'Today';
+    else if (age < 7 * dayMs) group = 'This week';
+
+    const day =
+      group === 'Today'
+        ? ''
+        : group === 'This week'
+        ? ended.toLocaleDateString([], { weekday: 'short' }) + ' · '
+        : ended.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' · ';
+
+    const hours = r.duration_hours || 2;
+    const timeLabel =
+      r.status === HISTORY_STATUS.NO_SHOW
+        ? `${day}booked, not scanned`
+        : `${day}${this._clock(started)} – ${this._clock(ended)}${group === 'Today' ? ` · ${hours} hrs` : ''}`;
+
+    return {
+      id: 'HIST-' + r.id,
+      seatId: `Seat ${r.seat_id}`,
+      zone: this._zoneFor(r.seat_id),
+      duration: `${hours} hrs`,
+      timeLabel,
+      status: r.status,
+      group,
+      timestamp: ended.getTime(),
     };
-    this._entries.unshift(record);
-    this._save();
-    return record;
-  }
-  _formatTimeRange(startMs) {
-    const start = new Date(startMs);
-    const end = new Date(startMs + 2 * 60 * 60 * 1000);
-    const opts = { hour: 'numeric', minute: '2-digit', hour12: true };
-    return `${start.toLocaleTimeString([], opts).toLowerCase()} – ${end.toLocaleTimeString([], opts).toLowerCase()} · 2 hrs`;
-  }
-  _load() {
-    try {
-      try { localStorage.removeItem('stacks.history.v1'); } catch (_) {}
-      const raw = localStorage.getItem(STORAGE_KEYS.HISTORY);
-      if (raw) this._entries = JSON.parse(raw);
-    } catch (e) {}
-  }
-  _save() {
-    try {
-      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(this._entries));
-    } catch (e) {}
-  }
-  _seedDefaults() {
-    const now = Date.now();
-    this._entries = [
-      { id: 'HIST-1', seatId: 'Seat A2', zone: 'Silent zone', timeLabel: '3:42 pm – 5:42 pm · 2 hrs', status: HISTORY_STATUS.COMPLETED, group: 'Today', timestamp: now - 3600000 },
-      { id: 'HIST-2', seatId: 'Seat C4', zone: 'Near power', timeLabel: 'Tue · 11:00 am – 1:00 pm', status: HISTORY_STATUS.COMPLETED, group: 'This week', timestamp: now - 86400000 * 2 },
-      { id: 'HIST-3', seatId: 'Seat B1', zone: 'Near power', timeLabel: 'Mon · booked, not scanned', status: HISTORY_STATUS.NO_SHOW, group: 'This week', timestamp: now - 86400000 * 3 },
-      { id: 'HIST-4', seatId: 'Seat D3', zone: 'Window row', timeLabel: 'Mon · 9:00 am – 11:00 am', status: HISTORY_STATUS.COMPLETED, group: 'This week', timestamp: now - 86400000 * 3.5 },
-      { id: 'HIST-5', seatId: 'Seat A1', zone: 'Silent zone', timeLabel: 'Last week · 2:00 pm – 4:00 pm', status: HISTORY_STATUS.COMPLETED, group: 'Older', timestamp: now - 86400000 * 7 },
-      { id: 'HIST-6', seatId: 'Seat B2', zone: 'Window row', timeLabel: 'Last week · 10:00 am – 12:00 pm', status: HISTORY_STATUS.COMPLETED, group: 'Older', timestamp: now - 86400000 * 8 },
-    ];
   }
 }
 

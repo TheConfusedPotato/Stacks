@@ -32,22 +32,14 @@ var HISTORY_STATUS = Object.freeze({
   OVERSTAY: 'overstay',
 });
 
+// Placeholder only (guests). Real students come from Supabase Auth + the profiles table.
 var DEFAULT_STUDENT = Object.freeze({
-  id: 'USR-042',
-  name: 'Ananya Rao',
-  email: 'ananya@pict.edu',
-  password: 'password123',
-  branch: 'B.Tech CSE · 3rd year',
-  cardStatus: 'verified card',
+  id: null,
+  name: 'Student',
+  email: '',
+  branch: '',
+  cardStatus: 'unverified',
   preferredZone: 'Silent zone',
-});
-
-var DEFAULT_STAFF = Object.freeze({
-  id: 'LIB-0042',
-  staffId: 'LIB-0042',
-  name: 'Chief Librarian S. Murthy',
-  password: 'admin123',
-  role: 'admin',
 });
 
 if (typeof window !== 'undefined') {
@@ -56,7 +48,6 @@ if (typeof window !== 'undefined') {
   window.STORAGE_KEYS = STORAGE_KEYS;
   window.HISTORY_STATUS = HISTORY_STATUS;
   window.DEFAULT_STUDENT = DEFAULT_STUDENT;
-  window.DEFAULT_STAFF = DEFAULT_STAFF;
 }
 if (typeof globalThis !== 'undefined') {
   globalThis.SEAT_STATUS = SEAT_STATUS;
@@ -64,5 +55,4 @@ if (typeof globalThis !== 'undefined') {
   globalThis.STORAGE_KEYS = STORAGE_KEYS;
   globalThis.HISTORY_STATUS = HISTORY_STATUS;
   globalThis.DEFAULT_STUDENT = DEFAULT_STUDENT;
-  globalThis.DEFAULT_STAFF = DEFAULT_STAFF;
 }

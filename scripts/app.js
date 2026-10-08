@@ -16,10 +16,40 @@
     return params.get(name);
   }
 
+  // Seat ids from the URL are validated (they end up in innerHTML and notifications).
+  function getSeatParam(fallback = 'A1') {
+    const v = (getQueryParam('seat') || '').trim().toUpperCase();
+    return /^[A-J](10|[1-9])$/.test(v) ? v : fallback;
+  }
+
+  function bookingErrorMessage(err) {
+    const map = {
+      SEAT_TAKEN: 'That seat was just taken. Pick another.',
+      already_has_seat: 'You already have an active seat.',
+      not_signed_in: "Couldn't start a session. Reload and try again.",
+    };
+    const msg = (err && err.message) || '';
+    return map[msg] || 'Booking failed: ' + msg;
+  }
+
+  // Staff actions go through the database (RLS enforces admin-only).
+  async function adminSetSeat(id, status) {
+    try {
+      await StacksSupabase.adminSetStatus(id, status); // 'free' | 'maintenance' | 'overstay'
+      showToast(`Seat ${id} → ${status.toUpperCase()}`, status === 'free' ? 'teal' : (status === 'overstay' ? 'red' : 'amber'));
+      if (typeof seatStore !== 'undefined') await seatStore._refreshSeat(id);
+      return true;
+    } catch (err) {
+      showToast(err.message === 'NOT_ADMIN' ? 'Not signed in as staff' : 'Failed: ' + err.message, 'red');
+      return false;
+    }
+  }
+
   function getPageName() {
     const path = window.location.pathname;
-    const file = path.split('/').pop() || 'index.html';
-    return file.toLowerCase();
+    let file = (path.split('/').pop() || 'index.html').toLowerCase();
+    if (!file.includes('.')) file += '.html'; // Netlify serves /signin for signin.html
+    return file;
   }
 
   function formatTimeDigits(num) {
@@ -225,15 +255,18 @@
         const email = emailInput?.value || '';
         const password = passwordInput?.value || '';
 
-        const res = authStore.login(email, password);
-        if (res.success) {
-          showToast('Signed in successfully', 'teal');
-          setTimeout(() => {
-            window.location.href = 'dashboard.html';
-          }, 300);
-        } else {
-          showToast(res.message || 'Login failed', 'red');
-        }
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const email = emailInput?.value || '';
+          const password = passwordInput?.value || '';
+          const res = await authStore.login(email, password);
+          if (res.success) {
+            showToast('Signed in successfully', 'teal');
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 300);
+          } else {
+            showToast(res.message || 'Login failed', 'red');
+          }
+        });
       });
     }
   }
@@ -247,33 +280,17 @@
     const confirmInput = document.getElementById('confirm');
 
     if (form) {
-      form.addEventListener('submit', (e) => {
+      // FIX — make the handler async and await
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const name = nameInput?.value.trim();
-        const email = emailInput?.value.trim();
-        const password = passwordInput?.value;
-        const confirm = confirmInput?.value;
-
-        if (!name || !email || !password) {
-          showToast('Please fill out all fields', 'amber');
-          return;
+        // ... validation unchanged ...
+        const res = await authStore.startSignup({ name, email, password });
+        if (res.success) {
+          showToast('Verification code dispatched', 'teal');
+          setTimeout(() => { window.location.href = 'otp-verification.html'; }, 300);
+        } else {
+          showToast(res.message || 'Signup failed', 'red');
         }
-
-        if (password !== confirm) {
-          showToast('Passwords do not match', 'red');
-          return;
-        }
-
-        if (password.length < 6) {
-          showToast('Password should be at least 6 characters', 'amber');
-          return;
-        }
-
-        authStore.startSignup({ name, email, password });
-        showToast('Verification code dispatched', 'teal');
-        setTimeout(() => {
-          window.location.href = 'otp-verification.html';
-        }, 300);
       });
     }
   }
@@ -507,12 +524,12 @@
   }
 
   // 8. matrix.html
-  function initMatrix() {
-    const session = (typeof authStore !== 'undefined' && authStore.getAdminSession()) || null;
+  async function initMatrix() {
+    const isAdminSession = await (window.StacksSupabase ? window.StacksSupabase.isAdmin() : false);
     const requestedAdmin = getQueryParam('role') === 'admin';
 
     // If student attempts to access admin mode via URL without an active admin session, redirect to login
-    if (requestedAdmin && (!session || session.role !== 'admin')) {
+    if (requestedAdmin && !isAdminSession) {
       if (typeof showToast === 'function') {
         showToast('Staff credentials required for admin mode', 'amber');
       }
@@ -520,7 +537,7 @@
       return;
     }
 
-    const isAdmin = Boolean(session && session.role === 'admin');
+    const isAdmin = isAdminSession;
 
     let selectedSeatId = 'A1';
     let currentZone = 'all';
@@ -605,25 +622,22 @@
       );
 
       setTimeout(() => {
-        document.getElementById('modal-set-free')?.addEventListener('click', () => {
-          seatStore.update(s.id, { status: SEAT_STATUS.FREE, bookedBy: null, sessionEndsAt: null, bookedAt: null });
-          showToast(`Seat ${s.id} is now FREE`, 'teal');
+        document.getElementById('modal-set-free')?.addEventListener('click', async () => {
+          await adminSetSeat(s.id, 'free');
           const bd = document.getElementById('stacks-modal-backdrop');
           if (bd) bd.remove();
           renderSeats();
           updateFooter();
         });
-        document.getElementById('modal-set-maint')?.addEventListener('click', () => {
-          seatStore.update(s.id, { status: SEAT_STATUS.MAINTENANCE, bookedBy: null, sessionEndsAt: null, bookedAt: null });
-          showToast(`Seat ${s.id} marked MAINTENANCE`, 'amber');
+        document.getElementById('modal-set-maint')?.addEventListener('click', async () => {
+          await adminSetSeat(s.id, 'maintenance');
           const bd = document.getElementById('stacks-modal-backdrop');
           if (bd) bd.remove();
           renderSeats();
           updateFooter();
         });
-        document.getElementById('modal-flag-overstay')?.addEventListener('click', () => {
-          seatStore.flagOverstay(s.id);
-          showToast(`Seat ${s.id} flagged OVERSTAY`, 'red');
+        document.getElementById('modal-flag-overstay')?.addEventListener('click', async () => {
+          await adminSetSeat(s.id, 'overstay');
           const bd = document.getElementById('stacks-modal-backdrop');
           if (bd) bd.remove();
           renderSeats();
@@ -777,7 +791,7 @@
 
   // 9. seat-detail.html
   function initSeatDetail() {
-    const seatId = getQueryParam('seat') || 'A1';
+    const seatId = getSeatParam('A1');
     const seat = seatStore.get(seatId) || {
       id: seatId,
       zone: 'Silent zone',
@@ -862,8 +876,9 @@
     const cta = document.querySelector('footer .cta');
     if (cta) {
       cta.textContent = `Book seat ${seat.id}`;
-      cta.addEventListener('click', (e) => {
+      cta.addEventListener('click', async (e) => {
         e.preventDefault();
+        if (cta.dataset.busy) return;
         const user = authStore.getCurrentUser() || DEFAULT_STUDENT;
 
         // Check if user already holds an active seat
@@ -884,11 +899,15 @@
           }
         }
 
-        // 2. Record booking in seatStore
-        seatStore.bookSeat(seat.id, user.id, selectedDuration);
-
-        // 3. Navigate to booking confirmation
-        window.location.href = `booking-confirmation.html?seat=${seat.id}&duration=${selectedDuration}`;
+        // 2. Book on the server FIRST; only navigate if it worked
+        cta.dataset.busy = '1';
+        try {
+          await seatStore.bookSeat(seat.id, user.id, selectedDuration);
+          window.location.href = `booking-confirmation.html?seat=${seat.id}&duration=${selectedDuration}`;
+        } catch (err) {
+          delete cta.dataset.busy;
+          showToast(bookingErrorMessage(err), 'red');
+        }
       });
     }
   }
@@ -902,8 +921,13 @@
         notificationStore.requestPermission();
       }
     }
-    const seatId = getQueryParam('seat') || 'A1';
+    const seatId = getSeatParam('A1');
     const seat = seatStore.get(seatId);
+    if (!seat || !seatStore.isMine(seat) || seat.status !== SEAT_STATUS.PENDING) {
+      window.location.replace(seat && seatStore.isMine(seat) && seat.status === SEAT_STATUS.OCCUPIED
+        ? `active-session.html?seat=${seatId}` : `booking-expired.html?seat=${seatId}`);
+      return;
+    }
 
     const seatName = document.querySelector('.ticket .seat-name');
     if (seatName) seatName.textContent = seatId;
@@ -946,8 +970,13 @@
 
   // 11. scan.html
   function initScan() {
-    const seatId = getQueryParam('seat') || 'A1';
+    const seatId = getSeatParam('A1');
     const seat = seatStore.get(seatId);
+    if (!seat || !seatStore.isMine(seat) || seat.status !== SEAT_STATUS.PENDING) {
+      window.location.replace(seat && seatStore.isMine(seat) && seat.status === SEAT_STATUS.OCCUPIED
+        ? `active-session.html?seat=${seatId}` : `booking-expired.html?seat=${seatId}`);
+      return;
+    }
 
     const seatTagVal = document.querySelector('.seat-tag .value');
     if (seatTagVal) seatTagVal.textContent = `Seat ${seatId}`;
@@ -1010,21 +1039,30 @@
       });
     }
 
-    function completeScan() {
+    async function completeScan() {
       const user = authStore.getCurrentUser() || DEFAULT_STUDENT;
-      seatStore.confirmSeatScan(seatId, user.id);
-      showToast(`QR Code Verified for Seat ${seatId}!`, 'teal');
-      setTimeout(() => {
-        window.location.href = `active-session.html?seat=${seatId}`;
-      }, 400);
+      try {
+        await seatStore.confirmSeatScan(seatId, user.id);
+        showToast(`QR Code Verified for Seat ${seatId}!`, 'teal');
+        setTimeout(() => {
+          window.location.href = `active-session.html?seat=${seatId}`;
+        }, 400);
+      } catch (err) {
+        showToast(err.message === 'CONFIRM_FAILED'
+          ? 'Booking expired, or it is not your booking.' : 'Scan failed: ' + err.message, 'red');
+      }
     }
   }
 
   // 12. active-session.html
   function initActiveSession() {
     const user = authStore.getCurrentUser() || DEFAULT_STUDENT;
-    const seatId = getQueryParam('seat') || seatStore.getUserActiveSeat(user.id)?.id || 'A2';
+    const seatId = getSeatParam(seatStore.getUserActiveSeat(user.id)?.id || 'A2');
     const seat = seatStore.get(seatId);
+    if (!seat || !seatStore.isMine(seat) || seat.status === SEAT_STATUS.FREE || seat.status === SEAT_STATUS.PENDING) {
+      window.location.replace('dashboard.html');
+      return;
+    }
 
     const seatStrong = document.querySelector('.seat-line strong');
     if (seatStrong) seatStrong.textContent = seatId;
@@ -1046,7 +1084,6 @@
         if (typeof notificationStore !== 'undefined' && typeof notificationStore.notifyVacate === 'function') {
           notificationStore.notifyVacate(seatId);
         }
-        seatStore.flagOverstay(seatId);
         window.location.href = `vacate-now.html?seat=${seatId}`;
         return;
       }
@@ -1069,8 +1106,12 @@
   // 13. vacate-now.html
   function initVacateNow() {
     const user = authStore.getCurrentUser() || DEFAULT_STUDENT;
-    const seatId = getQueryParam('seat') || seatStore.getUserActiveSeat(user.id)?.id || 'A2';
+    const seatId = getSeatParam(seatStore.getUserActiveSeat(user.id)?.id || 'A2');
     const seat = seatStore.get(seatId);
+    if (!seat || !seatStore.isMine(seat) || (seat.status !== SEAT_STATUS.OCCUPIED && seat.status !== SEAT_STATUS.OVERSTAY)) {
+      window.location.replace('dashboard.html');
+      return;
+    }
 
     const seatStrong = document.querySelector('.seat-line strong');
     if (seatStrong) seatStrong.textContent = seatId;
@@ -1081,12 +1122,14 @@
     }
 
     // Grace period timer: 5 minutes from session end (or now)
-    const graceEndsAt = Date.now() + TIMER_RULES.VACATE_WINDOW_MS;
+    const graceEndsAt = (seat?.sessionEndsAt || Date.now()) + TIMER_RULES.VACATE_WINDOW_MS;
     const timerEl = document.querySelector('.timer');
+    let timerId;
 
     const tick = () => {
       const rem = graceEndsAt - Date.now();
       if (rem <= 0) {
+        clearInterval(timerId);
         if (timerEl) timerEl.textContent = '00:00';
         seatStore.flagOverstay(seatId);
         showToast('Grace period ended. Seat flagged.', 'red');
@@ -1102,24 +1145,28 @@
       if (timerEl) timerEl.textContent = formatMmSs(rem);
     };
     tick();
-    setInterval(tick, 1000);
+    timerId = setInterval(tick, 1000);
 
     const cta = document.querySelector('footer .cta');
     if (cta) {
-      cta.addEventListener('click', (e) => {
+      cta.addEventListener('click', async (e) => {
         e.preventDefault();
-        seatStore.vacateSeat(seatId);
-        showToast(`Seat ${seatId} vacated. Thank you!`, 'teal');
-        setTimeout(() => {
-          window.location.href = 'dashboard.html';
-        }, 400);
+        try {
+          await seatStore.vacateSeat(seatId);
+          showToast(`Seat ${seatId} vacated. Thank you!`, 'teal');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 400);
+        } catch (err) {
+          showToast('Could not vacate: ' + err.message, 'red');
+        }
       });
     }
   }
 
   // 14. booking-expired.html
   function initBookingExpired() {
-    const seatId = getQueryParam('seat') || 'B1';
+    const seatId = getSeatParam('B1');
     const rowVals = document.querySelectorAll('.ticket .row .val');
     if (rowVals.length >= 4) {
       rowVals[0].textContent = seatId;
@@ -1345,42 +1392,31 @@
 
   // 18. admin-login.html
   function initAdminLogin() {
-    const fillBtn = document.getElementById('fill-demo-staff');
-    if (fillBtn) {
-      fillBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const idInp = document.getElementById('staff-id');
-        const passInp = document.getElementById('password');
-        if (idInp) idInp.value = 'LIB-0042';
-        if (passInp) passInp.value = 'admin123';
-        showToast('Demo credentials filled: LIB-0042 / admin123', 'teal');
-      });
-    }
+    // (demo-credential autofill removed: staff sign in with their real Supabase account)
 
     const form = document.querySelector('form');
     if (form) {
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const staffId = document.getElementById('staff-id')?.value;
-        const password = document.getElementById('password')?.value;
-
-        const res = authStore.loginAdmin(staffId, password);
-        if (res.success) {
+        const email = (document.getElementById('staff-id')?.value || '').trim();
+        const password = document.getElementById('password')?.value || '';
+        try {
+          await StacksSupabase.adminSignIn(email, password);
           showToast('Staff authenticated. Redirecting...', 'teal');
           setTimeout(() => {
             window.location.href = 'admin-dashboard.html';
           }, 200);
-        } else {
-          showToast(res.message || 'Staff login failed', 'red');
+        } catch (err) {
+          showToast(err.message || 'Staff login failed', 'red');
         }
       });
     }
   }
 
   // 19. admin-dashboard.html
-  function initAdminDashboard() {
-    const session = (typeof authStore !== 'undefined' && authStore.getAdminSession()) || null;
-    if (!session || session.role !== 'admin') {
+  async function initAdminDashboard() {
+    const isAdminSession = await (window.StacksSupabase ? window.StacksSupabase.isAdmin() : false);
+    if (!isAdminSession) {
       if (typeof showToast === 'function') {
         showToast('Staff login required to access Admin Dashboard', 'red');
       }
@@ -1390,8 +1426,9 @@
 
     const logoutBtn = document.getElementById('admin-logout-btn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', (e) => {
+      logoutBtn.addEventListener('click', async (e) => {
         e.preventDefault();
+        await StacksSupabase.signOut();
         authStore.logoutAdmin();
         window.location.replace('admin-login.html');
       });
@@ -1435,10 +1472,9 @@
             `;
 
             const actionBtn = card.querySelector('.action');
-            actionBtn.addEventListener('click', () => {
+            actionBtn.addEventListener('click', async () => {
               if (isOverstay) {
-                seatStore.vacateSeat(s.id);
-                showToast(`Staff cleared Seat ${s.id}`, 'teal');
+                await adminSetSeat(s.id, 'free');
                 refreshAdminData();
               } else {
                 showToast(`Monitoring hold on Seat ${s.id}`, 'amber');
@@ -1474,17 +1510,15 @@
             );
 
             setTimeout(() => {
-              document.getElementById('admin-free-btn')?.addEventListener('click', () => {
-                seatStore.update(s.id, { status: SEAT_STATUS.FREE, bookedBy: null, sessionEndsAt: null, bookedAt: null });
-                showToast(`Seat ${s.id} set to FREE`, 'teal');
+              document.getElementById('admin-free-btn')?.addEventListener('click', async () => {
+                await adminSetSeat(s.id, 'free');
                 const bd = document.getElementById('stacks-modal-backdrop');
                 if (bd) bd.remove();
                 else document.getElementById('modal-cancel-btn')?.click();
                 refreshAdminData();
               });
-              document.getElementById('admin-maint-btn')?.addEventListener('click', () => {
-                seatStore.update(s.id, { status: SEAT_STATUS.MAINTENANCE, bookedBy: null, sessionEndsAt: null, bookedAt: null });
-                showToast(`Seat ${s.id} marked MAINTENANCE`, 'amber');
+              document.getElementById('admin-maint-btn')?.addEventListener('click', async () => {
+                await adminSetSeat(s.id, 'maintenance');
                 const bd = document.getElementById('stacks-modal-backdrop');
                 if (bd) bd.remove();
                 else document.getElementById('modal-cancel-btn')?.click();
@@ -1499,6 +1533,7 @@
     }
 
     refreshAdminData();
+    window.addEventListener('stacks:seats-updated', refreshAdminData); // live updates
 
     // Wire tabbar links in admin dashboard
     const tabLinks = document.querySelectorAll('nav.tabbar a');
@@ -1527,10 +1562,18 @@
 
   // ---- Bootstrap Dispatcher ----------------------------------------------
 
-  function init() {
+  async function init() {
     initGlobalNavigation();
 
     const page = getPageName();
+
+    // Seat pages must not render before the first database sync (4 s cap if backend is down).
+    const needsSeats = ['landing.html', 'index.html', 'signin.html', 'dashboard.html', 'matrix.html',
+      'seat-detail.html', 'booking-confirmation.html', 'scan.html', 'active-session.html',
+      'vacate-now.html', 'booking-expired.html', 'admin-dashboard.html'];
+    if (needsSeats.includes(page) && typeof seatStore !== 'undefined' && seatStore.ready) {
+      await Promise.race([seatStore.ready, new Promise((r) => setTimeout(r, 4000))]);
+    }
 
     switch (page) {
       case 'landing.html':

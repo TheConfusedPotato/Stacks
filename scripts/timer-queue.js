@@ -63,7 +63,11 @@ class TimerQueue {
 
 var timerQueue = new TimerQueue();
 
+// NOTE: expiry/overstay is now enforced by the database (pg_cron expire_seats).
+// Client timers are disabled: every browser sees EVERY seat, so each one would
+// "expire" other people's bookings and write fake history entries.
 function scheduleNoShowClear(seatId, customDelayMs) {
+  return;
   const delay = customDelayMs !== undefined ? customDelayMs : TIMER_RULES.SCAN_WINDOW_MS;
   timerQueue.schedule(seatId, TIMER_TYPE.NO_SHOW, delay, (id) => {
     if (typeof seatStore !== 'undefined') seatStore.expireBooking(id);
@@ -75,6 +79,7 @@ function cancelNoShowClear(seatId) {
 }
 
 function scheduleOverstayFlag(seatId, customDelayMs) {
+  return;
   const delay = customDelayMs !== undefined ? customDelayMs : TIMER_RULES.VACATE_WINDOW_MS;
   timerQueue.schedule(seatId, TIMER_TYPE.OVERSTAY, delay, (id) => {
     if (typeof seatStore !== 'undefined') seatStore.flagOverstay(id);
@@ -86,6 +91,7 @@ function cancelOverstayFlag(seatId) {
 }
 
 function syncSeatTimers() {
+  return;
   if (typeof seatStore === 'undefined') return;
   const now = Date.now();
   const seats = seatStore.getAll();
