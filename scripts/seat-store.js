@@ -92,6 +92,33 @@ class SeatStore {
     }
     const row = payload.new || payload.record;
     if (row && row.id) {
+      // Detect break expiry: the DB cron flipped our on_break seat to free.
+      // Fire the collection-area alert only on this user's own seat.
+      const wasOnBreak = payload.old && payload.old.status === "on_break";
+      const isNowFree  = row.status === "free";
+      const wasMine    = payload.old && payload.old.booked_by === this.myUid;
+      if (wasOnBreak && isNowFree && wasMine) {
+        if (typeof notificationStore !== "undefined") {
+          notificationStore.add({
+            type: "red",
+            title: `Break expired — Seat ${String(row.id).toUpperCase()} released`,
+            desc: "Your belongings have been moved to the collection area at the front desk. Please collect them.",
+          });
+          if (typeof notificationStore.playAudioChime === "function") {
+            notificationStore.playAudioChime();
+          }
+          if (typeof notificationStore.sendPlatformNotification === "function") {
+            notificationStore.sendPlatformNotification(
+              `Seat ${String(row.id).toUpperCase()} released — collect belongings`,
+              {
+                body: "Your break expired. Your belongings are at the front desk collection area.",
+                tag: `break-expired-${row.id}`,
+                requireInteraction: true,
+              }
+            );
+          }
+        }
+      }
       this.applySupabaseRow(row);
       this._emitUpdated({ row, payload });
     }
@@ -155,6 +182,7 @@ class SeatStore {
       occupied: SEAT_STATUS.OCCUPIED,
       overstay: SEAT_STATUS.OVERSTAY,
       maintenance: SEAT_STATUS.MAINTENANCE,
+      on_break: SEAT_STATUS.ON_BREAK,
     };
     const status = statusMap[row.status] ?? SEAT_STATUS.FREE;
     const noOwner = status === SEAT_STATUS.FREE || status === SEAT_STATUS.MAINTENANCE;
@@ -168,6 +196,8 @@ class SeatStore {
       bookedAt: noOwner || !row.booked_at ? null : Date.parse(row.booked_at),
       durationHours: row.duration_hours || 2,
       sessionEndsAt: row.session_ends_at ? Date.parse(row.session_ends_at) : null,
+      breakEndsAt: row.break_ends_at ? Date.parse(row.break_ends_at) : null,
+      breakUsed: row.break_used ?? false,
     });
   }
 
@@ -200,7 +230,8 @@ class SeatStore {
         (this.isMine(s) || (userId && s.bookedBy === userId)) &&
         (s.status === SEAT_STATUS.PENDING ||
           s.status === SEAT_STATUS.OCCUPIED ||
-          s.status === SEAT_STATUS.OVERSTAY)
+          s.status === SEAT_STATUS.OVERSTAY ||
+          s.status === SEAT_STATUS.ON_BREAK)
     );
   }
 
@@ -323,6 +354,57 @@ class SeatStore {
     try {
       await this._refreshSeat(id);
     } catch (_) {}
+  }
+
+  // --------------------------------------------------------- break management
+
+  async startBreak(seatId, breakMinutes) {
+    const id = seatId.trim().toUpperCase();
+    const seat = this.get(id);
+
+    // Client-side guard — the RPC enforces this too, but fail fast with a clear message
+    if (seat && seat.breakUsed) {
+      throw new Error("BREAK_ALREADY_USED");
+    }
+    if (![5, 10, 15].includes(Number(breakMinutes))) {
+      throw new Error("BREAK_INVALID_DURATION");
+    }
+
+    const helper = this._requireHelper();
+    const ok = await helper.startBreak(id, Number(breakMinutes));
+    if (!ok) throw new Error("BREAK_FAILED");
+
+    await this._refreshSeat(id);
+    const updated = this.get(id);
+
+    if (typeof notificationStore !== "undefined") {
+      const _fmtClock = (ms) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+      const endsAt = updated && updated.breakEndsAt ? _fmtClock(updated.breakEndsAt) : "soon";
+      notificationStore.add({
+        type: "amber",
+        title: `Break started — Seat ${id} held`,
+        desc: `You have ${breakMinutes} minutes to return. Seat released at ${endsAt} if you don't scan back in.`,
+      });
+    }
+    return updated;
+  }
+
+  async resumeBreak(seatId) {
+    const id = seatId.trim().toUpperCase();
+    const helper = this._requireHelper();
+    const ok = await helper.resumeBreak(id);
+    if (!ok) throw new Error("RESUME_FAILED");  // break may have already expired
+
+    await this._refreshSeat(id);
+
+    if (typeof notificationStore !== "undefined") {
+      notificationStore.add({
+        type: "teal",
+        title: `Welcome back — Seat ${id}`,
+        desc: "Your session has resumed. The remaining time continues from where it left off.",
+      });
+    }
+    return this.get(id);
   }
 
   // ---------------------------------------------------------------- placeholders

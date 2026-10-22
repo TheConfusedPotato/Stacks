@@ -502,6 +502,23 @@
         };
         updateOccupiedTick();
         setInterval(updateOccupiedTick, 1000);
+      } else if (activeSeat.status === SEAT_STATUS.ON_BREAK) {
+        statusCard.style.borderLeftColor = 'var(--amber)';
+        const breakEndsAt = activeSeat.breakEndsAt || (Date.now() + 15 * 60 * 1000);
+        const updateBreakTick = () => {
+          const rem = Math.max(0, breakEndsAt - Date.now());
+          statusCard.innerHTML = `
+            <div class="status-label" style="color:var(--amber);">on break · seat held</div>
+            <div class="status-main">
+              <span class="seat-name">Seat ${activeSeat.id}</span>
+              <span class="time-left" style="color:var(--amber);">${formatMmSs(rem)} remaining</span>
+            </div>
+            <p class="status-sub">${activeSeat.zone} · Return before time runs out</p>
+            <a class="link-cta" href="break-active.html?seat=${activeSeat.id}" style="color:var(--amber);border-bottom-color:var(--amber);">Return to seat →</a>
+          `;
+        };
+        updateBreakTick();
+        setInterval(updateBreakTick, 1000);
       } else if (activeSeat.status === SEAT_STATUS.OVERSTAY) {
         statusCard.style.borderLeftColor = 'var(--red)';
         statusCard.innerHTML = `
@@ -723,6 +740,8 @@
               showToast(`Seat ${id} is flagged for staff check`, 'red');
             } else if (seat.status === SEAT_STATUS.MAINTENANCE) {
               showToast(`Seat ${id} is currently under maintenance`, 'amber');
+            } else if (seat.status === SEAT_STATUS.ON_BREAK) {
+              showToast(`Seat ${id} is temporarily held — occupant on a short break`, 'amber');
             }
           }
         });
@@ -1061,6 +1080,13 @@
     const user = authStore.getCurrentUser() || DEFAULT_STUDENT;
     const seatId = getSeatParam(seatStore.getUserActiveSeat(user.id)?.id || 'A2');
     const seat = seatStore.get(seatId);
+
+    // If user refreshes while on break, send them to the break page
+    if (seat && seatStore.isMine(seat) && seat.status === SEAT_STATUS.ON_BREAK) {
+      window.location.replace(`break-active.html?seat=${seatId}`);
+      return;
+    }
+
     if (!seat || !seatStore.isMine(seat) || seat.status === SEAT_STATUS.FREE || seat.status === SEAT_STATUS.PENDING) {
       window.location.replace('dashboard.html');
       return;
@@ -1103,6 +1129,203 @@
     if (endBtn) {
       endBtn.href = `vacate-now.html?seat=${seatId}`;
     }
+
+    // --- Take a Break button ---
+    // Inject the button below the end-session button if not already in HTML
+    let breakBtn = document.getElementById('take-a-break-btn');
+    if (!breakBtn) {
+      breakBtn = document.createElement('button');
+      breakBtn.id = 'take-a-break-btn';
+      breakBtn.style.cssText = `
+        display:block;width:100%;margin-top:12px;padding:14px;
+        background:transparent;border:1px solid var(--amber,#D2984E);
+        color:var(--amber,#D2984E);font-family:'IBM Plex Mono',monospace;
+        font-size:13px;border-radius:2px;cursor:pointer;letter-spacing:0.02em;
+      `;
+      breakBtn.textContent = 'Take a break';
+      if (endBtn && endBtn.parentNode) {
+        endBtn.parentNode.insertBefore(breakBtn, endBtn.nextSibling);
+      } else {
+        const footer = document.querySelector('footer');
+        if (footer) footer.appendChild(breakBtn);
+      }
+    }
+
+    // Disable break button if already used this session
+    const currentSeat = seatStore.get(seatId);
+    if (currentSeat && currentSeat.breakUsed) {
+      breakBtn.disabled = true;
+      breakBtn.style.opacity = '0.4';
+      breakBtn.style.cursor = 'not-allowed';
+      breakBtn.textContent = 'Break already used';
+    }
+
+    breakBtn.addEventListener('click', () => {
+      if (breakBtn.disabled) return;
+
+      // Check again live (realtime may have updated the seat)
+      const liveSeat = seatStore.get(seatId);
+      if (liveSeat && liveSeat.breakUsed) {
+        showToast("You've already used your break for this session.", 'amber');
+        return;
+      }
+
+      // Duration picker modal
+      showModal(
+        'Take a Break',
+        `<p style="margin-bottom:16px;">Choose how long you need. Your seat is held for exactly this long — if you don't return, belongings go to the collection area.</p>
+         <div style="display:flex;gap:10px;">
+           ${TIMER_RULES.BREAK_OPTIONS_MINUTES.map((m) =>
+             `<button class="break-dur-opt" data-mins="${m}" style="
+               flex:1;padding:12px 0;background:var(--surface-raised,#201F21);
+               border:1px solid var(--border,#2C2A2C);color:var(--text-primary,#EBEAE6);
+               font-family:'IBM Plex Mono',monospace;font-size:13px;border-radius:2px;cursor:pointer;
+             ">${m} min</button>`
+           ).join('')}
+         </div>`,
+        'Cancel',
+        null
+      );
+
+      // Wire duration buttons — they live inside the modal
+      setTimeout(() => {
+        let selectedMins = null;
+        const opts = document.querySelectorAll('.break-dur-opt');
+        opts.forEach((opt) => {
+          opt.addEventListener('click', () => {
+            opts.forEach((o) => {
+              o.style.borderColor = 'var(--border,#2C2A2C)';
+              o.style.color = 'var(--text-primary,#EBEAE6)';
+            });
+            opt.style.borderColor = 'var(--amber,#D2984E)';
+            opt.style.color = 'var(--amber,#D2984E)';
+            selectedMins = parseInt(opt.dataset.mins, 10);
+
+            // Replace the cancel button with confirm now that a duration is chosen
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            if (confirmBtn) {
+              confirmBtn.textContent = `Start ${selectedMins}-min break`;
+              confirmBtn.style.background = 'var(--amber,#D2984E)';
+              confirmBtn.style.color = '#1A1408';
+              confirmBtn.onclick = async () => {
+                const bd = document.getElementById('stacks-modal-backdrop');
+                if (bd) bd.remove();
+                confirmBtn.disabled = true;
+                try {
+                  await seatStore.startBreak(seatId, selectedMins);
+                  showToast(`Break started — ${selectedMins} min hold on Seat ${seatId}`, 'amber');
+                  setTimeout(() => {
+                    window.location.href = `break-active.html?seat=${seatId}`;
+                  }, 400);
+                } catch (err) {
+                  if (err.message === 'BREAK_ALREADY_USED') {
+                    showToast("You've already used your break for this session.", 'amber');
+                  } else {
+                    showToast('Could not start break: ' + err.message, 'red');
+                  }
+                }
+              };
+            }
+          });
+        });
+      }, 60);
+    });
+  }
+
+  // 12b. break-active.html
+  function initBreakActive() {
+    const user = authStore.getCurrentUser() || DEFAULT_STUDENT;
+    const seatId = getSeatParam(seatStore.getUserActiveSeat(user.id)?.id || 'A2');
+    const seat = seatStore.get(seatId);
+
+    // If the break already expired before this page loaded, go home
+    if (!seat || !seatStore.isMine(seat)) {
+      showToast('Your break expired and the seat was released.', 'red');
+      window.location.replace('dashboard.html');
+      return;
+    }
+    // If user navigates here but seat is already back to occupied (e.g. resumed from another tab)
+    if (seat.status === SEAT_STATUS.OCCUPIED || seat.status === SEAT_STATUS.OVERSTAY) {
+      window.location.replace(`active-session.html?seat=${seatId}`);
+      return;
+    }
+    if (seat.status !== SEAT_STATUS.ON_BREAK) {
+      window.location.replace('dashboard.html');
+      return;
+    }
+
+    // Populate seat label
+    const seatStrong = document.querySelector('.seat-line strong') || document.querySelector('h1 strong');
+    if (seatStrong) seatStrong.textContent = seatId;
+
+    const timerEl   = document.querySelector('.break-timer, .timer');
+    const subEl     = document.querySelector('.timer-sub, .break-sub');
+    const returnBtn = document.querySelector('.cta, .btn-primary, footer .cta');
+
+    const breakEndsAt = seat.breakEndsAt || (Date.now() + 15 * 60 * 1000);
+    if (subEl) subEl.textContent = `Seat ${seatId} held until ${formatClockTime(breakEndsAt)}`;
+
+    const totalBreakMs = breakEndsAt - (seat.bookedAt || (breakEndsAt - 15 * 60 * 1000)); // approx
+    let expired = false;
+    const tick = () => {
+      const rem = breakEndsAt - Date.now();
+      if (rem <= 0 && !expired) {
+        expired = true;
+        if (timerEl) timerEl.textContent = '00:00';
+        if (typeof window._updateBreakArc === 'function') window._updateBreakArc(0, totalBreakMs);
+        // The DB cron will free the seat; the realtime handler in seat-store fires the
+        // collection notification. Just redirect the user.
+        showToast('Break expired — seat released. Collect belongings at front desk.', 'red');
+        setTimeout(() => window.location.replace('dashboard.html'), 2500);
+        return;
+      }
+      if (timerEl) timerEl.textContent = formatMmSs(Math.max(0, rem));
+      if (typeof window._updateBreakArc === 'function') window._updateBreakArc(Math.max(0, rem), totalBreakMs);
+    };
+    tick();
+    const tickId = setInterval(tick, 1000);
+
+    // "I'm back" button
+    if (returnBtn) {
+      returnBtn.textContent = "I'm back";
+      returnBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (returnBtn.dataset.busy) return;
+        returnBtn.dataset.busy = '1';
+        try {
+          await seatStore.resumeBreak(seatId);
+          clearInterval(tickId);
+          showToast(`Welcome back — session resumed on Seat ${seatId}`, 'teal');
+          setTimeout(() => {
+            window.location.href = `active-session.html?seat=${seatId}`;
+          }, 400);
+        } catch (err) {
+          delete returnBtn.dataset.busy;
+          if (err.message === 'RESUME_FAILED') {
+            showToast('Break already expired — seat was released.', 'red');
+            setTimeout(() => window.location.replace('dashboard.html'), 1800);
+          } else {
+            showToast('Could not resume: ' + err.message, 'red');
+          }
+        }
+      });
+    }
+
+    // If realtime pushes a seat-freed event while user is on this page, redirect immediately
+    window.addEventListener('stacks:seats-updated', () => {
+      const live = seatStore.get(seatId);
+      if (!live || !seatStore.isMine(live) || live.status === SEAT_STATUS.FREE) {
+        if (!expired) {
+          expired = true;
+          clearInterval(tickId);
+          // Collection notification already fired in seat-store._handleRealtimePayload
+          setTimeout(() => window.location.replace('dashboard.html'), 2500);
+        }
+      } else if (live.status === SEAT_STATUS.OCCUPIED) {
+        clearInterval(tickId);
+        window.location.replace(`active-session.html?seat=${seatId}`);
+      }
+    }, { once: false });
   }
 
   // 13. vacate-now.html
@@ -1576,7 +1799,7 @@
     // Seat pages must not render before the first database sync (4 s cap if backend is down).
     const needsSeats = ['landing.html', 'index.html', 'signin.html', 'dashboard.html', 'matrix.html',
       'seat-detail.html', 'booking-confirmation.html', 'scan.html', 'active-session.html',
-      'vacate-now.html', 'booking-expired.html', 'admin-dashboard.html'];
+      'break-active.html', 'vacate-now.html', 'booking-expired.html', 'admin-dashboard.html'];
     if (needsSeats.includes(page) && typeof seatStore !== 'undefined' && seatStore.ready) {
       await Promise.race([seatStore.ready, new Promise((r) => setTimeout(r, 4000))]);
     }
@@ -1621,6 +1844,9 @@
         break;
       case 'active-session.html':
         initActiveSession();
+        break;
+      case 'break-active.html':
+        initBreakActive();
         break;
       case 'vacate-now.html':
         initVacateNow();
@@ -1668,6 +1894,7 @@
     initBookingConfirmation,
     initScan,
     initActiveSession,
+    initBreakActive,
     initVacateNow,
     initBookingExpired,
     initHistory,

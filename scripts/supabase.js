@@ -148,7 +148,13 @@ async updateProfile(patch) {
   async adminSetStatus(id, status) {
     const patch = { status };
     if (status === "free" || status === "maintenance") {
-      Object.assign(patch, { booked_by: null, booked_at: null, session_ends_at: null });
+      Object.assign(patch, {
+        booked_by: null,
+        booked_at: null,
+        session_ends_at: null,
+        break_ends_at: null,
+        break_used: false,
+      });
     }
     const { data, error } = await supabase
       .from("seats").update(patch).eq("id", norm(id)).select();
@@ -172,6 +178,9 @@ async updateProfile(patch) {
   bookSeat(id, hours = 2) { return rpc("book_seat", { seat_id: norm(id), hours }); },
   confirmSeat(id)         { return rpc("confirm_seat", { seat_id: norm(id) }); },
   vacateSeat(id)          { return rpc("vacate_seat", { seat_id: norm(id) }); },
+  // breakMinutes must be 5 | 10 | 15 — enforced server-side too
+  startBreak(id, breakMinutes) { return rpc("start_break", { seat_id: norm(id), break_minutes: Number(breakMinutes) }); },
+  resumeBreak(id)              { return rpc("resume_break", { seat_id: norm(id) }); },
 
   subscribeToSeatsRealtime(callback) {
     return supabase

@@ -8,11 +8,13 @@ var SEAT_STATUS = Object.freeze({
   OCCUPIED: 'occupied',
   OVERSTAY: 'overstay',
   MAINTENANCE: 'maintenance',
+  ON_BREAK: 'on_break',
 });
 
 var TIMER_RULES = Object.freeze({
   SCAN_WINDOW_MS: 10 * 60 * 1000,
   VACATE_WINDOW_MS: 5 * 60 * 1000,
+  BREAK_OPTIONS_MINUTES: [5, 10, 15],
 });
 
 var STORAGE_KEYS = Object.freeze({
@@ -30,6 +32,7 @@ var HISTORY_STATUS = Object.freeze({
   COMPLETED: 'completed',
   NO_SHOW: 'no-show',
   OVERSTAY: 'overstay',
+  BREAK_EXPIRED: 'break_expired',
 });
 
 // Placeholder only (guests). Real students come from Supabase Auth + the profiles table.
@@ -56,3 +59,6 @@ if (typeof globalThis !== 'undefined') {
   globalThis.HISTORY_STATUS = HISTORY_STATUS;
   globalThis.DEFAULT_STUDENT = DEFAULT_STUDENT;
 }
+// TIMER_RULES.BREAK_OPTIONS_MINUTES is already on the frozen object above;
+// re-export the full objects so any script that reads them after this point
+// sees the updated frozen copies.
