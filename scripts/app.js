@@ -1262,10 +1262,27 @@
     const subEl     = document.querySelector('.timer-sub, .break-sub');
     const returnBtn = document.querySelector('.cta, .btn-primary, footer .cta');
 
-    const breakEndsAt = seat.breakEndsAt || (Date.now() + 15 * 60 * 1000);
+    // The server always sets break_ends_at when a break starts. If it is missing,
+    // do not invent a timer: go back to the dashboard.
+    if (!seat.breakEndsAt || Number.isNaN(seat.breakEndsAt)) {
+      showToast('Could not read your break timer. Check the dashboard.', 'red');
+      window.location.replace('dashboard.html');
+      return;
+    }
+    const breakEndsAt = seat.breakEndsAt;
     if (subEl) subEl.textContent = `Seat ${seatId} held until ${formatClockTime(breakEndsAt)}`;
 
-    const totalBreakMs = breakEndsAt - (seat.bookedAt || (breakEndsAt - 15 * 60 * 1000)); // approx
+    // Full break length for the ring. Exact when the DB stored break_started_at;
+    // otherwise (rows from before the migration) the smallest allowed option
+    // (5/10/15 min) that still covers the time left.
+    let totalBreakMs;
+    if (seat.breakStartedAt && breakEndsAt > seat.breakStartedAt) {
+      totalBreakMs = breakEndsAt - seat.breakStartedAt;
+    } else {
+      const remNow = Math.max(0, breakEndsAt - Date.now());
+      const opts = (TIMER_RULES.BREAK_OPTIONS_MINUTES || [5, 10, 15]).map((m) => m * 60 * 1000);
+      totalBreakMs = opts.find((ms) => ms >= remNow) || opts[opts.length - 1];
+    }
     let expired = false;
     const tick = () => {
       const rem = breakEndsAt - Date.now();

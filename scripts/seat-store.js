@@ -196,6 +196,7 @@ class SeatStore {
       bookedAt: noOwner || !row.booked_at ? null : Date.parse(row.booked_at),
       durationHours: row.duration_hours || 2,
       sessionEndsAt: row.session_ends_at ? Date.parse(row.session_ends_at) : null,
+      breakStartedAt: row.break_started_at ? Date.parse(row.break_started_at) : null,
       breakEndsAt: row.break_ends_at ? Date.parse(row.break_ends_at) : null,
       breakUsed: row.break_used ?? false,
     });

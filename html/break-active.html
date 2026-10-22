@@ -237,16 +237,17 @@
     })();
   </script>
 
-  <!-- Script load order matters: constants → supabase → stores → app -->
-  <script src="constants.js"></script>
-  <script type="module" src="supabase.js"></script>
-  <script src="min-heap.js"></script>
-  <script src="notification-store.js"></script>
-  <script src="seat-store.js"></script>
-  <script src="auth-store.js"></script>
-  <script src="history-store.js"></script>
-  <script src="timer-queue.js"></script>
-  <script src="app.js"></script>
+  <!-- Paths are relative to /html/. Module scripts always run after classic scripts;
+       the stores wait for the "stacks:supabase-ready" event, so order here is safe. -->
+  <script type="module" src="../scripts/supabase.js?v=2.3"></script>
+  <script src="../scripts/constants.js?v=2.2"></script>
+  <script src="../scripts/min-heap.js?v=2.2"></script>
+  <script src="../scripts/notification-store.js?v=2.2"></script>
+  <script src="../scripts/seat-store.js?v=2.2"></script>
+  <script src="../scripts/auth-store.js?v=2.2"></script>
+  <script src="../scripts/history-store.js?v=2.2"></script>
+  <script src="../scripts/timer-queue.js?v=2.2"></script>
+  <script src="../scripts/app.js?v=2.2"></script>
 
 </body>
 </html>
